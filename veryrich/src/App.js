@@ -1,7 +1,6 @@
 import React, {Component} from 'react'
 import _ from 'lodash'
-import {Button, Input, Table, Card, Tooltip, Col, Row, Switch} from 'antd'
-import {QuestionCircleOutlined} from '@ant-design/icons'
+import {Button, Input, Table, Card, Col, Row, Switch} from 'antd'
 import {actions, connect} from 'mirrorx'
 import {globalConstants} from './globalConstants'
 import './index.css'
@@ -32,11 +31,6 @@ class DashboardPage extends Component{
         promises.push(actions.report.getFight(report))
         Promise.all(promises).then(()=>{
             actions.report.getFightsData(report).then(()=>{this.setState({loading: false})})
-            // const kelID = this.findTargetIds([globalConstants.KEL_ID], this.props.fight)
-            // promises = []
-            // promises.push(actions.report.getKelParry({reportId: report, kelID}))
-            // promises.push(actions.report.getChainDebuff(report))
-            // promises.push(actions.report.getWebWrapDebuff(report))
         })
     }
 
@@ -44,36 +38,21 @@ class DashboardPage extends Component{
         const {tactical, report} = this.state
         let promises = []
         this.setState({loading: true})
-        promises.push(actions.report.getBOSSDmg(this.state.report))
-        promises.push(actions.report.getFight(this.state.report))
+        promises.push(actions.report.getBOSSDmg(report))
+        // promises.push(actions.report.getFight(report))
+        promises.push(actions.report.getAlarDebuff(report))
+        promises.push(actions.report.getLurkerSpout(report))
+        promises.push(actions.report.getKaelFlame(report))
+        promises.push(actions.report.getVashjCleave(report))
         Promise.all(promises).then(()=>{
             promises = []
-            if (tactical){
-                const slimeID = this.findTargetIds([globalConstants.SLIME], this.props.fight)
-                const interruptID = this.findTargetIds([globalConstants.INTERRUPT1], this.props.fight)
-                promises.push(actions.report.getSlime({reportId: report, slimeID}))
-                promises.push(actions.report.getThaddius(report))
-                promises.push(actions.report.get4DK(report))
-                promises.push(actions.report.getSpider({reportId: report, interruptID}))
-            }else {
-                const trashIds = this.findTargetIds(globalConstants.TRASHIDS, this.props.fight)
-                const filteredBossIds = this.findTargetIds(globalConstants.BOSSIDS.filter(v => !globalConstants.REMOVEBOSSIDS.includes(v)), this.props.fight)
-                const removedBossIds = this.findTargetIds(globalConstants.REMOVEBOSSIDS, this.props.fight)
-                promises.push(actions.report.getBossTrashDmg({trashIds, reportId: report, removedBossIds}))
-                promises.push(actions.report.getExcludedBossDmg({removedBossIds, reportId: report}))
-                promises.push(actions.report.getManaPotion(report))
-                promises.push(actions.report.getRogueSunderDebuff(report))
-                // promises.push(actions.report.getChainDebuff(report))
-                promises.push(actions.report.getWebWrapDebuff(report))
-                promises.push(actions.report.getRunes(report))
-                promises.push(actions.report.getHunterbuff(report))
-                promises.push(actions.report.getBossTrashSunderCasts({
-                    trashIds: trashIds.concat(filteredBossIds),
-                    reportId: this.state.report}))
-                promises.push(actions.report.getBossTrashLess5SunderCasts({
-                    trashIds: trashIds.concat(filteredBossIds),
-                    reportId: this.state.report}))
-            }
+            // if (tactical){
+            //     return
+            // }else {
+            //     const trashIds = this.findTargetIds(globalConstants.TRASHIDS, this.props.fight)
+            //     const removedBossIds = this.findTargetIds(globalConstants.REMOVEBOSSIDS, this.props.fight)
+            //     promises.push(actions.report.getBossTrashDmg({trashIds, reportId: report, removedBossIds}))
+            // }
             Promise.all(promises).then(()=>{
                 this.setState({loading: false})
             })
@@ -86,85 +65,29 @@ class DashboardPage extends Component{
         return enemies.map(enemy=>trashIds.includes(enemy.guid)&&enemy.id).filter(id=>!!id)
     }
 
-    calculatedSunderAvg = (sunderCasts) => {
-        let sumWithoutTop4 = sunderCasts?.map(i=>i.sunder).sort((a,b)=>b-a).slice(4).reduce((sum, item)=>sum+item)
-        let furyWarriorCounts = sunderCasts?.filter(item=> item.type ==='Warrior')?.length
-        return Math.floor(sumWithoutTop4/(furyWarriorCounts-4)*0.7)
-    }
-
-    calculatedEffectiveSunderAvg = (sunderCasts) => {
-        let sumWithoutTop4 = sunderCasts?.map(i=>i.less5sunder).sort((a,b)=>b-a).slice(4).reduce((sum, item)=>sum+item)
-        let furyWarriorCounts = sunderCasts?.filter(item=> item.type ==='Warrior')?.length
-        return Math.floor(sumWithoutTop4/(furyWarriorCounts-4)*0.7)
-    }
-
-    calculateManualSum = (manual) => {
-        const newManual = {...manual, id:0}
-        return Object.values(newManual)?.reduce((a, b) => a + b, 0)
-    }
-
     generateSource = () => {
-        const {bossDmg, bossTrashDmg, bossTrashSunderCasts, manaPotion, runes, filteredBossDmg, hunterAura, chainDebuff, bossTrashLess5SunderCasts, webWrapDebuff, rogueSunderDebuff, kelParry} = this.props
-        let finalDmgMax = {}
-        const less5SunderBase = this.calculatedEffectiveSunderAvg(bossTrashLess5SunderCasts)
-        const sunderBase = this.calculatedSunderAvg(bossTrashSunderCasts)
+        const {bossDmg, alarDebuff, lurkerSpout, kaelFlame, vashjCleave} = this.props
         let source = bossDmg?.map(entry=>{
-            const trashDmg = bossTrashDmg?.find(trashEntry=>trashEntry.id===entry.id)?.total
-            const filteredBossDmgData = filteredBossDmg?.find(trashEntry=>trashEntry.id===entry.id)?.total
-            const sunderCasts = entry.type === 'Warrior' ? bossTrashSunderCasts?.find(trashEntry=>trashEntry.id===entry.id)?.sunder :
-                bossTrashSunderCasts?.find(trashEntry=>trashEntry.id===entry.id)?.rogueSunder ? rogueSunderDebuff : 0
-            const less5sunderCasts = entry.type === 'Warrior' ? bossTrashLess5SunderCasts?.find(trashEntry=>trashEntry.id===entry.id)?.less5sunder : ''
-            const sunderPenalty = entry.type==='Warrior' ? less5sunderCasts < less5SunderBase || sunderCasts< sunderBase  ? Math.floor(-0.05 * trashDmg) : 0 :
-                entry.type==='Rogue' ? sunderCasts * 2200 : 0
-            const manual = this.state.manual.find(trashEntry=>trashEntry.id===entry.id) || {}
-            const manaPotionCasts = manaPotion?.find(trashEntry=>trashEntry.id===entry.id)?.total || 0
-            const runesCasts = runes?.find(trashEntry=>trashEntry.id===entry.id)?.runes
-            const chainTime = Math.round(chainDebuff?.find(trashEntry=>trashEntry.id===entry.id)?.totalUptime/1000) || ''
-            const chainDmg = chainDebuff?.find(trashEntry=>trashEntry.id===entry.id)?.debuffDmg || ''
-            const kelParryDmg = kelParry?.find(trashEntry=>trashEntry.id===entry.id)?.kelParryDmg
-            const webWrapTime = Math.round(webWrapDebuff?.find(trashEntry=>trashEntry.id===entry.id)?.totalUptime/1000) || ''
-            const webDmg = webWrapDebuff?.find(trashEntry=>trashEntry.id===entry.id)?.debuffDmg || ''
-            const hunterAuraStatus = hunterAura?.find(trashEntry=>trashEntry.id===entry.id)?.totalUses>12 || hunterAura?.find(trashEntry=>trashEntry.id===entry.id)?.totalUptime>500000
-            const hunterAuraPenalty = hunterAuraStatus && (entry.type==='Warrior'||entry.type==='Rogue') ? Math.floor(-0.015 * trashDmg) : 0
-            const finalDamage = Number(trashDmg) + Number(sunderPenalty) + Number(hunterAuraPenalty) + this.calculateManualSum(manual)
-            finalDmgMax[entry.type] = finalDmgMax[entry.type] > finalDamage ? finalDmgMax[entry.type] : finalDamage
+            const alar = parseInt(alarDebuff?.filter(id=>id===entry.id).length)
+            const lurker = lurkerSpout?.includes(entry.id)
+            const kael = kaelFlame?.find(i=>i.id===entry.id)?.total || 0
+            const vashj = vashjCleave?.find(i=>i.id===entry.id)?.total || 0
+            console.log(parseInt(kael*globalConstants.KAEL_FINE))
             return {
                 id: entry.id,
                 name: entry.name,
                 type: entry.type,
                 bossDmg: entry.total,
-                bossTrashDmg: trashDmg,
-                sunderCasts,
-                manaPotionCasts,
-                runesCasts,
-                filteredBossDmgData,
-                sunderPenalty,
-                hunterAuraPenalty,
-                finalDamage,
-                chainTime,
-                chainDmg,
-                webWrapTime,
-                webDmg,
-                manual,
-                kelParryDmg,
-                less5sunderCasts
+                alarDebuff: alar,
+                lurkerSpout: lurker,
+                kaelFlame:kael,
+                vashjCleave: vashj,
+                final:Number(alar*globalConstants.ALAR_FINE)+Number(lurker ?globalConstants.LURKER_FINE:0)+
+                parseInt(kael*globalConstants.KAEL_FINE)+ (vashj>0?globalConstants.VASHJ_FINE:0)
             }
         })
 
-        source = source?.map(entry=>{
-            entry.finalScore = (entry.finalDamage/finalDmgMax[entry.type]).toFixed(2)
-            return entry
-        })
         return source
-    }
-
-    handleManualChange = (e, record, type) => {
-        const newManual = this.state.manual.find(item=>item.id == record.id) ?
-            this.state.manual.map(item=>item.id === record.id ? {...item, [type]: Number(e.target.value)} : item) :
-            this.state.manual.concat([{id: record.id, [type]: Number(e.target.value)}])
-        this.setState({
-            manual: newManual
-        })
     }
 
     mergeTactics = () => {
@@ -174,11 +97,9 @@ class DashboardPage extends Component{
     }
 
     render() {
-        const {fightsData, bossTrashSunderCasts, bossTrashLess5SunderCasts} = this.props
+        const {fightsData} = this.props
         const tactics = this.mergeTactics()
         const {tactical, loading} = this.state
-        const sunderBase = this.calculatedSunderAvg(bossTrashSunderCasts)
-        const less5SunderBase = this.calculatedEffectiveSunderAvg(bossTrashLess5SunderCasts)
         const dataSource =  this.generateSource()
         const excelDataSource = fightsData
         const columns = [
@@ -236,126 +157,46 @@ class DashboardPage extends Component{
                 sorter: (a, b) => a.bossDmg-b.bossDmg,
             },
             {
-                title: <Tooltip title="去除DK2, DK3，孢子男，电男，老克的伤害">
-                    <span>有效boss伤害<QuestionCircleOutlined /></span>
-                </Tooltip>,
-                dataIndex: 'filteredBossDmgData',
+                title: `奥踩火三秒以上(${globalConstants.ALAR_FINE}G/次)`,
+                dataIndex: 'alarDebuff',
+                render: (text, record) => record.alarDebuff>0 ? text+'次': null
             },
             {
-                title: '全程有效伤害',
-                dataIndex: 'bossTrashDmg',
-                sorter: (a, b) => a.bossTrashDmg-b.bossTrashDmg,
+                title: '王子烈焰风暴(1000伤害80G)',
+                dataIndex: 'kaelFlame',
+                sorter: (a, b) => a.kaelFlame-b.kaelFlame,
             },
             {
-                title: <Tooltip title="目标是考核DPS的怪，括号里是对有效目标破甲层数不足5层时打的破甲，贼的破甲为强破">
-                    <span>有效目标破甲数<QuestionCircleOutlined /></span>
-                </Tooltip>,
-                dataIndex: 'sunderCasts',
-                render: (text,record)=> record.type ==='Warrior' ? `
-                ${text}(${record.less5sunderCasts} - ${(parseFloat(record.less5sunderCasts)/parseFloat(record.sunderCasts)*100).toFixed(2)}%)`
-                    : record.type ==='Rogue' ? text : '',
+                title: `鱼斯拉喷涌(${globalConstants.LURKER_FINE}G)`,
+                dataIndex: 'lurkerSpout',
+                render: (text, record) => record.lurkerSpout && '菜逼被喷飞'
             },
             {
-                title: <Tooltip title={`平均数的70%为: ${sunderBase}(${less5SunderBase})，任意一项不足的扣5%有效伤害, 贼每个成功的强破补偿2200伤害`}>
-                    <span>破甲补/扣分<QuestionCircleOutlined /></span>
-                </Tooltip>,
-                dataIndex: 'sunderPenalty',
-                render: text=> text !== 0 ? text : null,
+                title: `瓦斯琪顺劈伤害(有伤害即${globalConstants.VASHJ_FINE}G)`,
+                dataIndex: 'vashjCleave',
+                sorter: (a, b) => a.vashjCleave-b.vashjCleave,
             },
             {
-                title: <Tooltip title="扣1.5%有效伤害">
-                    <span>强击光环扣除<QuestionCircleOutlined /></span>
-                </Tooltip>,
-                dataIndex: 'hunterAuraPenalty',
-                render: text=> text !== 0 ? text : null,
-            },
-            // {
-            //     title: '老克',
-            //     children: [
-            //         {
-            //             title: '心控时间',
-            //             dataIndex: 'chainTime',
-            //         },
-            //         {
-            //             title: '心控补偿',
-            //             dataIndex: 'chainDmg',
-            //         },
-            //         {
-            //             title: <Tooltip title="对于所有的招架，战士的肉搏伤害按照个人平均值两倍进行补偿；战士技能伤害，贼肉搏伤害按照个人平均值进行补偿">
-            //                 <span>招架补偿<QuestionCircleOutlined /></span>
-            //             </Tooltip>,
-            //             dataIndex: 'kelParryDmg',
-            //             render: text=> text !== 0 ? text : null,
-            //         },
-            //     ]
-            // },
-            // {
-            //     title:<Tooltip title="蜘蛛3上墙">
-            //         <span>蛛网裹体<QuestionCircleOutlined /></span>
-            //     </Tooltip>,
-            //     children: [
-            //         {
-            //             title:<Tooltip title={`时间计算方式为上墙debuff时间+${globalConstants.WEB_WRAP_RUN}秒跑路时间`}>
-            //                 <span>时间<QuestionCircleOutlined /></span>
-            //             </Tooltip>,
-            //             dataIndex: 'webWrapTime',
-            //         },
-            //         {
-            //             title: '上墙补偿',
-            //             dataIndex: 'webDmg',
-            //         },
-            //
-            //     ]
-            // },
-            // {
-            //     title:<Tooltip title="传送时间无法自动获取">
-            //         <span>跳舞男传送<QuestionCircleOutlined /></span>
-            //     </Tooltip>,
-            //     children: [
-            //         {
-            //             title: '补分',
-            //             dataIndex: ['manual','tel'],
-            //             render: (text, record) => <Input value={this.state.manual.tel} onBlur={(e)=>this.handleManualChange(e, record, 'tel')} style={{maxWidth: 85}}/>
-            //         },
-            //
-            //     ]
-            // },
-            {
-                title: '大蓝',
-                dataIndex: 'manaPotionCasts',
-                sorter: (a, b) => a.manaPotionCasts-b.manaPotionCasts,
+                title: '瓦斯琪踩毒两秒以上(300G/次)',
+                dataIndex: 'alarDebuff',
+                render: (text, record) => record.alarDebuff>0 ? text+'次': null
             },
             {
-                title: '符文',
-                dataIndex: 'runesCasts',
-                sorter: (a, b) => a.runesCasts-b.runesCasts,
-            },
-            {
-                title: '其他补/扣分',
-                dataIndex: ['manual','other'],
-                render: (text, record) => <Input value={this.state.manual.other} onBlur={(e)=>this.handleManualChange(e, record, 'other')} style={{maxWidth: 100}}/>
-            },
-            {
-                title: '总分',
-                dataIndex: 'finalDamage',
-                sorter: (a, b) => a.finalDamage-b.finalDamage,
-                defaultSortOrder: 'descend',
-            },
-            {
-                title: '百分比',
-                dataIndex: 'finalScore',
+                title: '总罚款',
+                dataIndex: 'final',
+                sorter: (a, b) => a.final-b.final,
             },
         ]
         return (
             <Card title={<Row type="flex" gutter={16}>
-                <Col>
-                    <Switch
-                        checked={tactical}
-                        onChange={(checked)=>this.setState({tactical: checked})}
-                        checkedChildren="战术动作"
-                        unCheckedChildren="伤害统计"
-                    />
-                </Col>
+                {/*<Col>*/}
+                {/*    <Switch*/}
+                {/*        checked={tactical}*/}
+                {/*        onChange={(checked)=>this.setState({tactical: checked})}*/}
+                {/*        checkedChildren="战术动作"*/}
+                {/*        unCheckedChildren="伤害统计"*/}
+                {/*    />*/}
+                {/*</Col>*/}
                 <Col>
                     <Input
                         style={{width: 400}}

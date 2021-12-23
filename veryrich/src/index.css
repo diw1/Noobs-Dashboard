@@ -49,8 +49,12 @@ code {
   color: white;
 }
 
-.Paladin,.Shaman{
+.Paladin{
   background: #F48CBA;
+  color: white;
+}
+.Shaman{
+  background: #3B68F2;
   color: white;
 }
 

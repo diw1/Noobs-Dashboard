@@ -28,7 +28,12 @@ export default {
         fourTactics: null,
         spiderTactics: null,
         kelParry: null,
-        bossTrashLess5SunderCasts:null
+        bossTrashLess5SunderCasts:null,
+        //TBC
+        alarDebuff: null,
+        lurkerSpout: null,
+        kaelFlame: null,
+        vashjCleave: null
     },
     reducers: {
         save(state, data) {
@@ -521,21 +526,6 @@ export default {
                     spiderTactics: result
                 })
             })
-            //一波流吸收
-            service.getDamageTakenByAbility(reportId, globalConstants.SHADOW_BRUST).then(record=>{
-                result = result.map(entry=>{
-                    let res = _.cloneDeep(entry)
-                    res.darkAbsorb = true
-                    const absorb = record.data.entries.find(i=>i.id===entry.id)?.hitdetails.length>0 ?
-                        record.data.entries.find(i=>i.id===entry.id).hitdetails.find(hitdetail=> hitdetail.type==='Absorb'
-                            || hitdetail.type==='Tick Absorb' || hitdetail.type==='Resist' || hitdetail.type==='Tick' && hitdetail.absorbOrOverheal>0) : true
-                    res.darkAbsorb =  absorb
-                    return res
-                })
-                actions.report.save({
-                    spiderTactics: result
-                })
-            })
 
             // 火箭鞋打蜘蛛1
             service.getCastsByAbilityAndEncounter(reportId, 0, globalConstants.ANUB_ENCOUNTER_ID).then(record=>{
@@ -648,48 +638,42 @@ export default {
             })
         },
 
-        async getWebWrapDebuff(reportId){
-            const result = await service.getDebuffsByAbility(reportId, globalConstants.WEBWRAPID)
-            const damage = await service.getDamageDoneByAbilityAndEncounter(reportId, 0, globalConstants.MAEXXNA_ENCOUNTER_ID)
-            const bossFight = actions.report.getS().report.fight.fights.find(fight=>fight.boss===globalConstants.MAEXXNA_ENCOUNTER_ID)
-            const bossTime = bossFight.end_time-bossFight.start_time
-            const webWrapDebuff = result.data.auras.map(debuff=>{
-                const totalUptime = debuff.totalUptime + globalConstants.WEB_WRAP_RUN * debuff.bands.length * 1000
-                const playerDMG = damage.data.entries?.find(dmg=> debuff.id === dmg.id)?.total
-                const avg = playerDMG/(bossTime-totalUptime)
-                const debuffDmg = Math.floor(avg* totalUptime)
-                return {...debuff, debuffDmg, totalUptime}
-            })
+        // TBC
+        async getAlarDebuff(reportId){
+            const result = await service.getDebuffsEventsByAbility(reportId, globalConstants.ALAR_DEBUFF)
+            const filtered = result.data?.events?.filter(event=>event.type==='applydebuffstack' && event.stack>2).map(event=>{
+                return event.targetID}) // 找到大于2层的userID
             actions.report.save({
-                webWrapDebuff
+                alarDebuff: filtered
             })
         },
 
-        async getKelParry({reportId, kelID}) {
-            const {BS1_ID, BS4_ID, MELEE_ID, WW_ID, EX_ID, HS_ID} = globalConstants
-            let abilities = [BS1_ID, BS4_ID, MELEE_ID, WW_ID, EX_ID, HS_ID]
-            let result = actions.report.getS().report.bossDmg
-            let promises = []
-            abilities.map((abilityID)=> promises.push(service.getDamageDoneByAbilityAndTarget(reportId, abilityID, kelID)))
-            Promise.all(promises).then(trashRecords=>{
-                trashRecords.map(trashRecord=>{
-                    const isMelee = trashRecord.data.entries.find(i=>i.type==='Warrior') && trashRecord.data.entries.find(i=>i.type==='Rogue')
-                    result = result.map(entry=>{
-                        let res = _.cloneDeep(entry)
-                        res.kelParryDmg = res.kelParryDmg || 0
-                        const player = trashRecord.data.entries.find(i=>i.id===entry.id)
-                        const avgDmg = player?.hitCount ? player?.total/player?.hitCount : 0
-                        const parryCount = avgDmg && player?.missdetails.find(detail=>detail.type==='Parry')?.count
-                        const cpDmg = parryCount && Math.floor(avgDmg * parryCount * (player.type==='Warrior' && isMelee ? 2: 1))
-                        res.kelParryDmg = Number.isInteger(cpDmg) ? res.kelParryDmg + cpDmg : res.kelParryDmg
-                        return res
-                    })
-                    actions.report.save({
-                        kelParry: result
-                    })
-                })
+        async getKaelFlame(reportId){
+            const result = await service.getDamageTakenByAbility(reportId, globalConstants.KAEL_FLAME)
+            const filtered = result.data.entries.filter(i=>i.total>0).map(i=>({id: i.id,total:i.total}))
+
+            actions.report.save({
+                kaelFlame: filtered
             })
-        }
+        },
+
+        async getLurkerSpout(reportId){
+            const result = await service.getDamageTakenByAbility(reportId, globalConstants.LURKER_SPOUT)
+            const filtered = result.data.entries.filter(i=>i.total>0).map(i=>i.id)
+
+            actions.report.save({
+                lurkerSpout: filtered
+            })
+        },
+
+        async getVashjCleave(reportId){
+            const result = await service.getDamageTakenByAbility(reportId, globalConstants.VASHJ_CLEAVE)
+            const filtered = result.data.entries.filter(i=>i.total>0).map(i=>({id: i.id,total:i.total}))
+
+            actions.report.save({
+                vashjCleave: filtered
+            })
+        },
     }
 
 }

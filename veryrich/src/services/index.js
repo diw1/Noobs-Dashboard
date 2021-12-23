@@ -52,8 +52,18 @@ function getDebuffsByAbility (reportID, abilityId, enemy= false) {
     return getData(url)
 }
 
+function getDebuffsEventsByAbility (reportID, abilityId, enemy= false) {
+    const url = `${globalConstants.BASE_URL}report/events/debuffs/${reportID}?api_key=${globalConstants.API_KEY}&end=${globalConstants.ENDTIME}&abilityid=${abilityId}&hostility=${enemy?1:0}`
+    return getData(url)
+}
+
 function getBuffsByAbility (reportID, abilityId) {
     const url = `${globalConstants.BASE_URL}report/tables/buffs/${reportID}?api_key=${globalConstants.API_KEY}&end=${globalConstants.ENDTIME}&abilityid=${abilityId}`
+    return getData(url)
+}
+
+function getDeathsByAbility (reportID, abilityId) {
+    const url = `${globalConstants.BASE_URL}report/tables/deaths/${reportID}?api_key=${globalConstants.API_KEY}&end=${globalConstants.ENDTIME}&abilityid=${abilityId}`
     return getData(url)
 }
 
@@ -91,6 +101,7 @@ export default {
     getFightSummary,
     getDamageTakenByAbility,
     getDebuffsByAbility,
+    getDebuffsEventsByAbility,
     getDamageDoneByAbilityAndTarget,
     getCastsByAbility,
     getBuffsByAbility,
@@ -98,5 +109,6 @@ export default {
     getBuffsByAbilityAndEncounter,
     getCastsByAbilityAndEncounter,
     getDamageDoneByAbilityAndEncounter,
-    getBOSSTrashSundarCast
+    getBOSSTrashSundarCast,
+    getDeathsByAbility
 }

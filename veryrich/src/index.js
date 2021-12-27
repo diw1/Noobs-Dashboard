@@ -1,13 +1,16 @@
-import React from 'react'
 import './index.css'
-import App from './App'
+import WCLPage from './pages/WCL'
 import * as serviceWorker from './serviceWorker'
-import reportModel from './models/report'
 import logger from 'redux-logger'
 
-import mirror, { Router, Switch, render, Route } from 'mirrorx'
+import mirror, { Router, Switch, render, Route, Redirect } from 'mirrorx'
+import PlayersPage from './pages/Players'
+import RaidsPage from './pages/Raids'
+import initModels from './models'
+import '@ant-design/pro-table/dist/table.css'
 
-mirror.model(reportModel)
+initModels(mirror)
+
 process.env.NODE_ENV === 'development' && mirror.defaults({
     middlewares : [logger]
 })
@@ -15,7 +18,13 @@ process.env.NODE_ENV === 'development' && mirror.defaults({
 render(
     <Router>
         <Switch>
-            <Route path='/' component={App}/>
+            <Redirect exact from='/' to='/players'/>
+            <Redirect exact from='/veryrich' to='/players'/>
+            <Route path='/wcl' component={WCLPage}/>
+            <Route path='/players' component={PlayersPage}/>
+            <Route exact path='/player/:playerId' component={PlayersPage}/>
+            <Route exact path='/raids' component={RaidsPage}/>
+            <Route exact path='/raid/:raidId' component={RaidsPage}/>
         </Switch>
     </Router>,
     document.getElementById('root')

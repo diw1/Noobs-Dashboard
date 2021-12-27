@@ -1,9 +1,8 @@
-import React, {Component} from 'react'
+import {Component} from 'react'
 import _ from 'lodash'
-import {Button, Input, Table, Card, Col, Row, Switch} from 'antd'
+import {Button, Input, Table, Card, Col, Row} from 'antd'
 import {actions, connect} from 'mirrorx'
-import {globalConstants} from './globalConstants'
-import './index.css'
+import {globalConstants} from '../../globalConstants'
 import ReactExport from 'react-data-export'
 import TacticalTable from './Tactical'
 
@@ -35,7 +34,7 @@ class DashboardPage extends Component{
     }
 
     submit = () => {
-        const {tactical, report} = this.state
+        const { report} = this.state
         let promises = []
         this.setState({loading: true})
         promises.push(actions.report.getBOSSDmg(report))

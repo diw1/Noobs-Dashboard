@@ -1,74 +1,8 @@
 export const globalConstants = {
     API_KEY: '8973e2f9f9412a72ff5f0aa377e1f391',
-    BASE_URL: 'https://classic.warcraftlogs.com/v1/',
-    ENDTIME: 60*60*1000*12,  //12 Hours
-    TRASHIDS: [],
-    EXCLUDEIDS: [],
-    REMOVEBOSSIDS: [],
-    BOSSIDS:[],
-    HUNTERAURA: 20906,
-    CHAINID: 28410,
-    WEBWRAPID:28622,
-    WEB_WRAP_RUN: 7, //second
-    SUNDERDEBUFFID: 11198,
-    BLOODTHIRSTID: 23894,
-    SHOTID: 5019,
-    VISCIDUSID:15299,
-    VEKNISSID:26078,
-    VEKNISS_THRESHOLD: 1500, //ms
-    MANA_POTIONID: 17531,
-    SWIFT_BOOT_ID: 9175,
-    STOPWATCH_ID: 14530,
-    DARK_RUNEID: 27869,
-    DEMON_RUNEID: 16666,
-    DENSE_BOMB: 23063, //致密炸弹
-    SAPPER: 13241, //地精工兵
-    HAT: 11828, //电磁帽
-    SLIME: 16024, //胖子区软泥
-    DEATHWISH: 12328, //死愿ID
-    RECKLESSNESS: 1719, //鲁莽ID
-    BLADEFLURRY: 13877, //乱舞ID
-    RUSH: 13750, //冲动ID
-    PUMMEL: 6554, //拳击ID
-    SHIELDBASH: 1672, //盾击ID
-    KICK: 1769, //脚踢ID
-    INTERRUPT1: 15987, //侍僧ID
-    THADDIUS_ENCOUNTER_ID: 1120, //电男encounterID
-    LOATHEB_ENCOUNTER_ID: 1115, //孢子encounterID
-    NOTH_CURSE_ID: 29213, //诺斯诅咒ID
-    NOTH_ENCOUNTER_ID: 1117, //诺斯encounterID
-    RESTO: 11359, //滋补药水
-    STONESHIELD: 17540, //石盾法术ID
-    DARKRES: 17548, //强效暗抗药水
-    ICERES: 17544, //强效暗抗药水
-    NATUREDMG1: 30043, //小蜘蛛自然伤害1
-    NATUREDMG2: 28428, //小蜘蛛自然伤害2
-    SHADOW_BRUST: 28447, //侍僧暗影爆发
-    HEIGAN_ENCOUNTER_ID: 1112, //希尔盖
-    SWIFT_BOOT_ITEM_ID: 7391, //迅捷鞋物品ID
-    ROCKET_BOOT_ITEM_ID: 7189, //火箭鞋物品ID
-    FOUR_ENCOUNTER_ID: 1121, //4DKencounterID
-    MAEXXNA_ENCOUNTER_ID: 1116, //蜘蛛3 ID
-    LIFE_STEAL_ID: 28542, //冰龙生命吸取ID
-    ANUB_ENCOUNTER_ID: 1107, //蜘蛛1 ID
-    SAPPHIRON_ENCOUNTER_ID: 1119, //冰龙ID
-    KEL_ENCOUNTER_ID: 1114, //老克ID
-    KEL_ID: 15990,
-    MELEE_ID: 1,
-    BS1_ID:23881,
-    BS4_ID:23894,
-    HS_ID: 25286,
-    WW_ID: 1680,
-    EX_ID: 20647,
+    WCL_API_BASE_URL: 'https://classic.warcraftlogs.com/v1/',
 
-    // TBC
-    ALAR_DEBUFF: 35383, //奥的火圈
-    ALAR_FINE: 800,
-    LURKER_SPOUT: 37433, //鱼斯拉喷涌
-    LURKER_FINE: 1000,
-    KAEL_FLAME: 36731, //王子烈焰风暴
-    KAEL_FINE: 0.08,
-    VASHJ_CLEAVE: 38260, //瓦斯琪顺劈
-    VASHJ_FINE: 300,
-
+    // DASHBOARD
+    API_BASE_URL: 'http://1.15.154.218/speedrunadmin/public/api',
+    WCL_BASE_URL: 'https://classic.warcraftlogs.com/reports/',
 }

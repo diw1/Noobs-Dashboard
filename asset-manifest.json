@@ -6,12 +6,12 @@
     "runtime-main.js": "/Noobs-Dashboard/static/js/runtime-main.3fac7835.js",
     "runtime-main.js.map": "/Noobs-Dashboard/static/js/runtime-main.3fac7835.js.map",
     "static/css/2.365b83e7.chunk.css": "/Noobs-Dashboard/static/css/2.365b83e7.chunk.css",
-    "static/js/2.a1198957.chunk.js": "/Noobs-Dashboard/static/js/2.a1198957.chunk.js",
-    "static/js/2.a1198957.chunk.js.map": "/Noobs-Dashboard/static/js/2.a1198957.chunk.js.map",
+    "static/js/2.d7d4bfd6.chunk.js": "/Noobs-Dashboard/static/js/2.d7d4bfd6.chunk.js",
+    "static/js/2.d7d4bfd6.chunk.js.map": "/Noobs-Dashboard/static/js/2.d7d4bfd6.chunk.js.map",
     "index.html": "/Noobs-Dashboard/index.html",
     "static/css/2.365b83e7.chunk.css.map": "/Noobs-Dashboard/static/css/2.365b83e7.chunk.css.map",
     "static/css/main.0b8a5e13.chunk.css.map": "/Noobs-Dashboard/static/css/main.0b8a5e13.chunk.css.map",
-    "static/js/2.a1198957.chunk.js.LICENSE.txt": "/Noobs-Dashboard/static/js/2.a1198957.chunk.js.LICENSE.txt",
+    "static/js/2.d7d4bfd6.chunk.js.LICENSE.txt": "/Noobs-Dashboard/static/js/2.d7d4bfd6.chunk.js.LICENSE.txt",
     "static/media/BasicLayout.e3298205.less": "/Noobs-Dashboard/static/media/BasicLayout.e3298205.less",
     "static/media/GridContent.96954e72.less": "/Noobs-Dashboard/static/media/GridContent.96954e72.less",
     "static/media/Header.a1bcbda7.less": "/Noobs-Dashboard/static/media/Header.a1bcbda7.less",
@@ -49,7 +49,7 @@
   "entrypoints": [
     "static/js/runtime-main.3fac7835.js",
     "static/css/2.365b83e7.chunk.css",
-    "static/js/2.a1198957.chunk.js",
+    "static/js/2.d7d4bfd6.chunk.js",
     "static/css/main.0b8a5e13.chunk.css",
     "static/js/main.ceffa6aa.chunk.js"
   ]

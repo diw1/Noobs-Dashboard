@@ -1,7 +1,6 @@
 import PageLayout from '../Layout'
 import {actions, Link} from 'mirrorx'
 import ProTable from '@ant-design/pro-table'
-import moment from 'moment'
 import {globalConstants} from '../../globalConstants'
 
 const RaidsPage = () => {
@@ -53,13 +52,7 @@ const RaidsPage = () => {
                 },
                 search: false,
             },
-            {
-                title: '创建时间',
-                dataIndex: 'createtime',
-                search: false,
-                sorter: (a, b) => a.createtime - b.createtime,
-                renderText: (text)=> moment(text* 1000).format('YYYY-MM-DD HH:mm')
-            },
+
         ]
         return(
             <ProTable

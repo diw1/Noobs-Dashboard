@@ -5,27 +5,28 @@ import logger from 'redux-logger'
 
 import mirror, { Router, Switch, render, Route, Redirect } from 'mirrorx'
 import PlayersPage from './pages/Players'
+import PlayerPage from './pages/Players/player'
 import RaidsPage from './pages/Raids'
 import initModels from './models'
 import '@ant-design/pro-table/dist/table.css'
+import RaidPage from './pages/Raids/raid'
 
 initModels(mirror)
 
 process.env.NODE_ENV === 'development' && mirror.defaults({
     middlewares : [logger],
-    historyMode: 'hash'
 })
 
 render(
     <Router base>
         <Switch>
             <Redirect exact from='/' to='/players'/>
-            <Redirect exact from='/Noobs-Dashboard' to='/Noobs-Dashboard/players'/>
+            <Redirect exact from='/Noobs-Dashboard' to='/players'/>
             <Route path='/wcl' component={WCLPage}/>
             <Route path='/players' component={PlayersPage}/>
-            <Route exact path='/player/:playerId' component={PlayersPage}/>
+            <Route exact path='/player/:playerId' component={PlayerPage}/>
             <Route exact path='/raids' component={RaidsPage}/>
-            <Route exact path='/raid/:raidId' component={RaidsPage}/>
+            <Route exact path='/raid/:raidId' component={RaidPage}/>
         </Switch>
     </Router>,
     document.getElementById('root')

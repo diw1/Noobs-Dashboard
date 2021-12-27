@@ -1,9 +1,19 @@
 import PageLayout from '../Layout'
-import {actions, Link} from 'mirrorx'
+import {actions, connect, Link} from 'mirrorx'
 import ProTable from '@ant-design/pro-table'
 import moment from 'moment'
+import {useEffect} from 'react'
+import {globalConstants} from '../../globalConstants'
 
-const PlayersPage = () => {
+const mapStateToProps = state => ({
+    paramrole: state.common.paramrole
+})
+
+const PlayersPage = (props) => {
+
+    useEffect(()=>{
+        !props.paramrole && actions.common.fetchAllParams()
+    },[props.paramrole])
 
     const playerTable = () =>{
         const columns = [
@@ -18,27 +28,17 @@ const PlayersPage = () => {
                 render: (text, item)=> <Link to={`/player/${item.id}`}>{text}</Link>
             },
             {
-                title: '微信ID',
-                dataIndex: 'wxid',
-                copyable: true,
-                search: false
-            },
-            {
                 title: '考核状态',
                 dataIndex: 'appraisalstatus',
                 sorter: (a, b) => a.appraisalstatus - b.appraisalstatus,
-                valueEnum: {
-                    1: { text: '正式队员', status: 'Success' },
-                    2: { text: '考核队员', status: 'Processing' },
-                    3: { text: '冷冻队员', status: 'Error' },
-                },
+                valueEnum: globalConstants.APPRAISAL_STATUS
             },
             {
                 title: '创建时间',
                 dataIndex: 'createtime',
                 search: false,
                 sorter: (a, b) => a.createtime - b.createtime,
-                render: (text)=> moment(text* 1000).format('YYYY-MM-DD HH:mm')
+                render: (text)=> moment(text* 1000).format(globalConstants.DATETIME_FORMAT)
             },
         ]
         return(
@@ -70,4 +70,4 @@ const PlayersPage = () => {
     )
 }
 
-export default PlayersPage
+export default connect(mapStateToProps,{})(PlayersPage)

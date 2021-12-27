@@ -29,7 +29,7 @@ export default {
             try {
                 const data = await service.getPlayerList(params)
                 actions.player.save({
-                    playerData: data?.data?.data
+                    playerData: data?.data
                 })
                 return data
             } catch(err) {

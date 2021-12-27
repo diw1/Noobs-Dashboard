@@ -5,4 +5,14 @@ export const globalConstants = {
     // DASHBOARD
     API_BASE_URL: 'http://1.15.154.218/speedrunadmin/public/api',
     WCL_BASE_URL: 'https://classic.warcraftlogs.com/reports/',
+    DATETIME_FORMAT: 'YYYY-MM-DD HH:mm',
+    APPRAISAL_STATUS: {
+        1: { text: '正式队员', status: 'Success' },
+        2: { text: '考核队员', status: 'Processing' },
+        3: { text: '冷冻队员', status: 'Error' },
+    },
+    FACTION_STATUS: {
+        1: { text: '联盟', status: 'Processing' },
+        2: { text: '部落', status: 'Error' },
+    }
 }

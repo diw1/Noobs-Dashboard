@@ -31,7 +31,7 @@ export default {
             try {
                 const data = await service.getRaidList(params)
                 actions.raid.save({
-                    raidData: data?.data?.data
+                    raidData: data?.data
                 })
                 return data
             } catch(err) {

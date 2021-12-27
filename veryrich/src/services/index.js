@@ -22,9 +22,15 @@ function getRaidList(params) {
     return getData(url)
 }
 
+function getParamList() {
+    const url = 'index/listAllParam'
+    return getData(url)
+}
+
 export default {
     getPlayerLists,
     getPlayerList,
     getRaidLists,
-    getRaidList
+    getRaidList,
+    getParamList
 }

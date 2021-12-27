@@ -12,14 +12,15 @@ import '@ant-design/pro-table/dist/table.css'
 initModels(mirror)
 
 process.env.NODE_ENV === 'development' && mirror.defaults({
-    middlewares : [logger]
+    middlewares : [logger],
+    historyMode: 'hash'
 })
 
 render(
-    <Router>
+    <Router base>
         <Switch>
             <Redirect exact from='/' to='/players'/>
-            <Redirect exact from='/veryrich' to='/players'/>
+            <Redirect exact from='/Noobs-Dashboard' to='/Noobs-Dashboard/players'/>
             <Route path='/wcl' component={WCLPage}/>
             <Route path='/players' component={PlayersPage}/>
             <Route exact path='/player/:playerId' component={PlayersPage}/>

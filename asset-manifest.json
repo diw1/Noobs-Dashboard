@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/Noobs-Dashboard/static/css/main.0b8a5e13.chunk.css",
-    "main.js": "/Noobs-Dashboard/static/js/main.fff3b920.chunk.js",
-    "main.js.map": "/Noobs-Dashboard/static/js/main.fff3b920.chunk.js.map",
+    "main.js": "/Noobs-Dashboard/static/js/main.4a085460.chunk.js",
+    "main.js.map": "/Noobs-Dashboard/static/js/main.4a085460.chunk.js.map",
     "runtime-main.js": "/Noobs-Dashboard/static/js/runtime-main.3fac7835.js",
     "runtime-main.js.map": "/Noobs-Dashboard/static/js/runtime-main.3fac7835.js.map",
     "static/css/2.365b83e7.chunk.css": "/Noobs-Dashboard/static/css/2.365b83e7.chunk.css",
@@ -51,6 +51,6 @@
     "static/css/2.365b83e7.chunk.css",
     "static/js/2.d7d4bfd6.chunk.js",
     "static/css/main.0b8a5e13.chunk.css",
-    "static/js/main.fff3b920.chunk.js"
+    "static/js/main.4a085460.chunk.js"
   ]
 }

@@ -1,8 +1,8 @@
 {
-  "name": "noobs-aot-dashboard",
+  "name": "noobs-dashboard",
   "version": "1.0.0",
   "private": true,
-  "homepage": "http://diw1.github.io/veryrich",
+  "homepage": "http://diw1.github.io/Noobs-Dashboard",
   "dependencies": {
     "antd": "^4.17.4",
     "@ant-design/pro-layout": "^6.31.7",

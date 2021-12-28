@@ -10,6 +10,7 @@ import RaidsPage from './pages/Raids'
 import initModels from './models'
 import '@ant-design/pro-table/dist/table.css'
 import RaidPage from './pages/Raids/raid'
+import RolePage from './pages/Role'
 
 initModels(mirror)
 
@@ -27,6 +28,7 @@ render(
             <Route exact path='/player/:playerId' component={PlayerPage}/>
             <Route exact path='/raids' component={RaidsPage}/>
             <Route exact path='/raid/:raidId' component={RaidPage}/>
+            <Route exact path='/roles' component={RolePage}/>
         </Switch>
     </Router>,
     document.getElementById('root')

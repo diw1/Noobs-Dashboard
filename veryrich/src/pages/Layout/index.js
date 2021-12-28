@@ -1,5 +1,5 @@
 import ProLayout, { PageContainer } from '@ant-design/pro-layout'
-import {TeamOutlined, FireOutlined, HomeOutlined} from '@ant-design/icons'
+import {TeamOutlined, FireOutlined, HomeOutlined, DashboardOutlined} from '@ant-design/icons'
 import {Link} from 'mirrorx'
 import '@ant-design/pro-layout/dist/layout.css'
 
@@ -23,9 +23,9 @@ const route = {
             icon: <FireOutlined />,
         },
         {
-            path: '/tests',
+            path: '/roles',
             name: '考核组列表',
-            icon: <TeamOutlined />,
+            icon: <DashboardOutlined />,
         },
     ]}
 

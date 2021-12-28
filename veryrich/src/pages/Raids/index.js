@@ -1,11 +1,24 @@
 import PageLayout from '../Layout'
-import {actions, Link} from 'mirrorx'
+import {actions, connect, Link} from 'mirrorx'
 import ProTable from '@ant-design/pro-table'
 import {globalConstants} from '../../globalConstants'
+import {useEffect} from 'react'
 
-const RaidsPage = () => {
+const mapStateToProps = state => ({
+    paramcd: state.common.paramcd,
+})
+
+const RaidsPage = (props) => {
+    useEffect(()=>{
+        !props.paramcd && actions.common.fetchAllParams()
+    },[props.paramcd])
+
 
     const raidTable = () =>{
+        const cdEnum = props.paramcd?.reduce((result,item)=>{
+            result[item.id]=item.name
+            return result
+        },{})
         const columns = [
             {
                 dataIndex: 'id',
@@ -40,7 +53,7 @@ const RaidsPage = () => {
             {
                 title: 'CD',
                 dataIndex: 'paramcd_id',
-                renderText: (text)=> `第${text}CD`
+                valueEnum: cdEnum
             },
             {
                 title: '完成状态',
@@ -49,6 +62,9 @@ const RaidsPage = () => {
                     1: { text: '已完成评分', status: 'Success' },
                     2: { text: '尚未开始', status: 'Error' },
                     3: { text: '评分阶段', status: 'Processing' },
+                    4: { text: '待导入', status: 'Processing' },
+                    5: { text: '导入中', status: 'Processing' },
+                    6: { text: '导入完毕', status: 'Processing' },
                 },
                 search: false,
             },
@@ -83,4 +99,4 @@ const RaidsPage = () => {
     )
 }
 
-export default RaidsPage
+export default connect(mapStateToProps,{})(RaidsPage)

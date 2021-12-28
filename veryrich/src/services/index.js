@@ -22,6 +22,11 @@ function getRaidList(params) {
     return getData(url)
 }
 
+function getRoleList(params) {
+    const url = `role/list?${queryString.stringify(params)}`
+    return getData(url)
+}
+
 function getParamList() {
     const url = 'index/listAllParam'
     return getData(url)
@@ -32,5 +37,6 @@ export default {
     getPlayerList,
     getRaidLists,
     getRaidList,
-    getParamList
+    getRoleList,
+    getParamList,
 }

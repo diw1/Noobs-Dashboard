@@ -30,13 +30,13 @@ const RaidPage = (props) => {
                 dataIndex: 'score',
                 sorter: (a, b) => a.score - b.score,
             },
-            {
-                title: '创建时间',
-                dataIndex: 'createtime',
-                search: false,
-                sorter: (a, b) => a.createtime - b.createtime,
-                render: (text)=> moment(text* 1000).format(globalConstants.DATETIME_FORMAT)
-            },
+            // {
+            //     title: '创建时间',
+            //     dataIndex: 'createtime',
+            //     search: false,
+            //     sorter: (a, b) => a.createtime - b.createtime,
+            //     render: (text)=> moment(text* 1000).format(globalConstants.DATETIME_FORMAT)
+            // },
         ]
         return(
             <ProTable

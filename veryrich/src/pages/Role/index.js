@@ -132,7 +132,7 @@ const RolePage = (props) => {
     }
 
     const mapToAttendance = (data) =>{
-        let result = []
+        let result
         result = data!=='' && data?.map(record=>{
             let attend = record.attend?.reduce((acc,item)=>Object.assign(acc,item),{})
             attend.sum = record.attend?.length
@@ -145,7 +145,7 @@ const RolePage = (props) => {
     }
 
     const mapToScore = (data) =>{
-        let result = []
+        let result
         result = data!=='' && data?.map(record=>{
             let score = record.score?.reduce((acc,item)=>Object.assign(acc,item),{})
             score.count = record.score?.reduce((acc,item)=>acc + (Object.values(item)[0]=== '' ? 0 : 1) ,0)
@@ -153,7 +153,6 @@ const RolePage = (props) => {
             score.avg =  (score.sum/score.count).toFixed(1)
             return Object.assign(record, score)
         })
-        console.log(result)
         return result
     }
 
@@ -166,6 +165,7 @@ const RolePage = (props) => {
             setStates(result)
         })
         return actions.role.save({roleData: null})
+        // eslint-disable-next-line
     },[match.params.roleId])
 
     const roleOptions =  paramrole?.map(role=>(

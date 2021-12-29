@@ -1,8 +1,8 @@
 {
   "name": "noobs-dashboard",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
-  "homepage": ".",
+  "homepage": "http://1.15.154.218",
   "dependencies": {
     "antd": "^4.17.4",
     "@ant-design/pro-layout": "^6.31.7",

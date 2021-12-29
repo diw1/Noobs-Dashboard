@@ -28,17 +28,15 @@ const PlayersPage = (props) => {
                 render: (text, item)=> <Link to={`/player/${item.id}`}>{text}</Link>
             },
             {
+                title: '昵称',
+                dataIndex: 'title',
+                render: text=> text && text!== 'null' ? text : ''
+            },
+            {
                 title: '考核状态',
                 dataIndex: 'appraisalstatus',
                 sorter: (a, b) => a.appraisalstatus - b.appraisalstatus,
                 valueEnum: globalConstants.APPRAISAL_STATUS
-            },
-            {
-                title: '创建时间',
-                dataIndex: 'createtime',
-                search: false,
-                sorter: (a, b) => a.createtime - b.createtime,
-                render: (text)=> moment(text* 1000).format(globalConstants.DATETIME_FORMAT)
             },
         ]
         return(

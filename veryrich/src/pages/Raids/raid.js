@@ -3,8 +3,8 @@ import {actions, Link, connect} from 'mirrorx'
 import ProTable from '@ant-design/pro-table'
 import moment from 'moment'
 import {globalConstants} from '../../globalConstants'
-import {Fragment, useEffect} from 'react'
-import {Descriptions, Badge } from 'antd'
+import {useEffect, useState} from 'react'
+import {Descriptions, Badge, Space} from 'antd'
 
 const mapStateToProps = state => ({
     paramrole: state.common.paramrole,
@@ -13,7 +13,27 @@ const mapStateToProps = state => ({
 
 const RaidPage = (props) => {
     const {raidId} = props.match.params
-    useEffect(()=>{actions.raid.fetchRaid({id: raidId})},[raidId])
+    const [roleData, setRoleData] = useState()
+    useEffect(()=>{
+        actions.raid.fetchRaid({id: raidId}).then(result=>{
+            let sum = {}
+            result?.data?.scoreres.map(record=>{
+                const count = sum[record.paramroleid]?.count? sum[record.paramroleid].count+1 : 1
+                const score = sum[record.paramroleid]?.score? sum[record.paramroleid].score+record.score: record.score
+                sum[record.paramroleid] = {
+                    paramroleid: record.paramroleid,
+                    paramrolename: record.paramrolename,
+                    count,
+                    score,
+                    avg: Number.parseInt(score/count)
+                }
+            })
+            setRoleData(Object.values(sum))
+        })
+        return function cleanup(){
+            actions.raid.save({raidData: null})
+        }
+    },[raidId])
     const playerTable = (raidData) =>{
         const columns = [
             {
@@ -26,17 +46,17 @@ const RaidPage = (props) => {
                 dataIndex: 'accountname',
             },
             {
+                title: '职业天赋',
+                dataIndex: 'paramrolename',
+                sorter: (a, b) => a.paramroleid - b.paramroleid,
+                render: (text, item)=> <Link to={`/role/${item.paramroleid}`}>{text}</Link>
+            },
+            {
                 title: '分数',
                 dataIndex: 'score',
                 sorter: (a, b) => a.score - b.score,
+                defaultSortOrder: 'descend'
             },
-            // {
-            //     title: '创建时间',
-            //     dataIndex: 'createtime',
-            //     search: false,
-            //     sorter: (a, b) => a.createtime - b.createtime,
-            //     render: (text)=> moment(text* 1000).format(globalConstants.DATETIME_FORMAT)
-            // },
         ]
         return(
             <ProTable
@@ -55,6 +75,39 @@ const RaidPage = (props) => {
             />)
     }
 
+    const roleTable = (roleData) =>{
+        const columns = [
+            {
+                title: '职业天赋',
+                dataIndex: 'paramrolename',
+                render: (text, item)=> <Link to={`/role/${item.paramroleid}`}>{text}</Link>
+            },
+            {
+                title: '人数',
+                dataIndex: 'count',
+            },
+
+            {
+                title: '平均分',
+                dataIndex: 'avg',
+                sorter: (a, b) => a.avg - b.avg,
+                defaultSortOrder: 'descend'
+            },
+        ]
+        return(
+            <ProTable
+                columns={columns}
+                rowKey="paramroleid"
+                pagination={false}
+                search={false}
+                request={ () => {
+                    return Promise.resolve( {
+                        data: roleData,
+                        success: true,
+                    })
+                }}
+            />)
+    }
 
     const description = (raidData) => {
         const raid = raidData?.raid
@@ -85,10 +138,11 @@ const RaidPage = (props) => {
     }
     const content = () => {
         return (
-            props.raidData && <Fragment>
+            props.raidData && <Space direction="vertical">
                 {description(props.raidData)}
                 {playerTable(props.raidData)}
-            </Fragment>
+                {roleData && roleTable(roleData)}
+            </Space>
         )
     }
     return (

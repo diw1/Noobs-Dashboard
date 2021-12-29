@@ -29,6 +29,7 @@ render(
             <Route exact path='/raids' component={RaidsPage}/>
             <Route exact path='/raid/:raidId' component={RaidPage}/>
             <Route exact path='/roles' component={RolePage}/>
+            <Route exact path='/role/:roleId' component={RolePage}/>
         </Switch>
     </Router>,
     document.getElementById('root')

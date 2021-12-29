@@ -2,6 +2,7 @@ import ProLayout, { PageContainer } from '@ant-design/pro-layout'
 import {TeamOutlined, FireOutlined, HomeOutlined, DashboardOutlined} from '@ant-design/icons'
 import {Link} from 'mirrorx'
 import '@ant-design/pro-layout/dist/layout.css'
+import Logo from '../../image/logo.png'
 
 
 const route = {
@@ -44,6 +45,7 @@ export default (props) => {
             border: '1px solid #ddd',
         }}
         title="Noobs AOT"
+        // logo={Logo}
         route={route}
     >
 

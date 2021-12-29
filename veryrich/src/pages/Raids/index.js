@@ -53,7 +53,8 @@ const RaidsPage = (props) => {
             {
                 title: 'CD',
                 dataIndex: 'paramcd_id',
-                valueEnum: cdEnum
+                valueEnum: cdEnum,
+                sorter: (a,b)=>a.paramcd_id-b.paramcd_id
             },
             {
                 title: '完成状态',
@@ -67,6 +68,7 @@ const RaidsPage = (props) => {
                     6: { text: '导入完毕', status: 'Processing' },
                 },
                 search: false,
+                sorter: (a,b)=>a.finishstatus-b.finishstatus
             },
 
         ]
@@ -77,6 +79,7 @@ const RaidsPage = (props) => {
                 pagination={{
                     pageSize: 25,
                 }}
+                search={{defaultCollapsed:false}}
                 request={async (params) => {
                     const result = await actions.raid.fetchAllRaids({
                         page: params.current,

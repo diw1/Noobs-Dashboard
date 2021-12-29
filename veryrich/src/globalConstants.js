@@ -14,5 +14,13 @@ export const globalConstants = {
     FACTION_STATUS: {
         1: { text: '联盟', status: 'Processing' },
         2: { text: '部落', status: 'Error' },
+    },
+    ATTENDANCE_STATUS: {
+        '出战': {status:'success'},
+        '替补': {status:'processing'},
+        '轮换': {status:'processing'},
+        '休息': {status:'processing'},
+        '请假': {status:'error'},
+        '未满足出战条件': {status:'warning'},
     }
 }

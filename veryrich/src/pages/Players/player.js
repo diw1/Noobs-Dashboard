@@ -1,72 +1,51 @@
 import PageLayout from '../Layout'
 import {actions, Link, connect} from 'mirrorx'
 import ProTable from '@ant-design/pro-table'
-import moment from 'moment'
 import {globalConstants} from '../../globalConstants'
-import {Fragment, useEffect} from 'react'
-import {Descriptions, Badge } from 'antd'
+import {useEffect} from 'react'
+import {Descriptions, Badge, Space } from 'antd'
 
 const mapStateToProps = state => ({
     paramrole: state.common.paramrole,
+    paramcd: state.common.paramcd,
     playerData: state.player.playerData
 })
 
 const PlayerPage = (props) => {
     const {playerId} = props.match.params
     useEffect(()=>{actions.player.fetchPlayer({id: playerId})},[playerId])
-    const playerTable = () =>{
+    const roleTable = (playerData) =>{
         const columns = [
             {
-                dataIndex: 'id',
-                valueType: 'indexBorder',
-                width: 36,
-            },
-            {
-                title: '队员名称',
+                title: '队员职业天赋名称',
                 dataIndex: 'name',
-                render: (text, item)=> <Link to={`/player/${item.id}`}>{text}</Link>
-            },
-            {
-                title: '考核状态',
-                dataIndex: 'appraisalstatus',
-                sorter: (a, b) => a.appraisalstatus - b.appraisalstatus,
-                valueEnum: {
-                    1: { text: '正式队员', status: 'Success' },
-                    2: { text: '考核队员', status: 'Processing' },
-                    3: { text: '冷冻队员', status: 'Error' },
-                },
-            },
-            {
-                title: '创建时间',
-                dataIndex: 'createtime',
-                search: false,
-                sorter: (a, b) => a.createtime - b.createtime,
-                render: (text)=> moment(text* 1000).format('YYYY-MM-DD HH:mm')
+                render: (text, item)=> <Link to={`/role/${item.paramrole_id}`}>{text}</Link>
             },
         ]
         return(
             <ProTable
+                style={{width: 300}}
                 columns={columns}
                 rowKey="id"
-                pagination={{
-                    pageSize: 25,
-                }}
-                request={async (params) => {
-                    const result = await actions.player.fetchAllPlayers({
-                        page: params.current,
-                        limit: params.pageSize,
-                        ...params
+                headerTitle="考核列表"
+                pagination={false}
+                search={false}
+                options={false}
+
+                request={ () => {
+                    return Promise.resolve( {
+                        data: playerData?.roleres,
+                        success: true,
                     })
-                    return {
-                        data: result?.data?.playerres,
-                        success: result?.code===1,
-                        total: result?.data?.playercount
-                    }
                 }}
             />)
     }
 
     const raidTable = (playerData) =>{
+        const cdEnum = props.paramcd?.reduce((result,item)=>{
+            result[item.id]=item.name
+            return result
+        },{})
         const columns = [
             {
                 dataIndex: 'id',
@@ -86,11 +65,6 @@ const PlayerPage = (props) => {
                     <a href={globalConstants.WCL_BASE_URL+text} target="_blank" rel="noreferrer">{text}</a> : ''
             },
             {
-                title: 'RL名称',
-                dataIndex: 'rlname',
-                search: false
-            },
-            {
                 title: '阵营',
                 dataIndex: 'paramfaction_id',
                 valueEnum: {
@@ -101,7 +75,7 @@ const PlayerPage = (props) => {
             {
                 title: 'CD',
                 dataIndex: 'paramcd_id',
-                renderText: (text)=> `第${text}CD`
+                valueEnum: cdEnum
             },
             {
                 title: '完成状态',
@@ -110,6 +84,9 @@ const PlayerPage = (props) => {
                     1: { text: '已完成评分', status: 'Success' },
                     2: { text: '尚未开始', status: 'Error' },
                     3: { text: '评分阶段', status: 'Processing' },
+                    4: { text: '待导入', status: 'Processing' },
+                    5: { text: '导入中', status: 'Processing' },
+                    6: { text: '导入完毕', status: 'Processing' },
                 },
                 search: false,
             },
@@ -148,10 +125,11 @@ const PlayerPage = (props) => {
     }
     const content = () => {
         return (
-            <Fragment>
+            <Space direction="vertical">
                 {description()}
+                {props.playerData && roleTable(props.playerData)}
                 {props.playerData && raidTable(props.playerData)}
-            </Fragment>
+            </Space>
         )
     }
     return (

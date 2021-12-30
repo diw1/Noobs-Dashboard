@@ -38,7 +38,8 @@ const attendanceTable = (cdres, attendance) =>{
     },{
         title: '出勤率',
         dataIndex: 'rate',
-        sorter: (a,b)=>a.attends/a.sum-b.attends/b.sum
+        render: text=> text.toLocaleString('en', {style: 'percent'}),
+        sorter: (a,b)=>a.rate-b.rate
     }])
 
     return(
@@ -73,9 +74,11 @@ const scoreTable = (raidres, score) =>{
     }))).concat([{
         title: '场次',
         dataIndex: 'count',
+        sorter: (a,b)=>a.count-b.count,
     },{
         title: '总分',
         dataIndex: 'sum',
+        sorter: (a,b)=>a.sum-b.sum,
     },{
         title: '平均分',
         dataIndex: 'avg',
@@ -103,9 +106,9 @@ const scoreTable = (raidres, score) =>{
 }
 
 const RolePage = (props) => {
-    const {paramrole, match} = props
+    const {paramrole, match, location} = props
     const [role, setRole] = useState(match.params?.roleId ? Number.parseInt(match.params?.roleId): undefined)
-    const [faction, setFaction] = useState(1)
+    const [faction, setFaction] = useState(location?.state?.faction || 1)
     const [allianceAttendance, setAllianceAttendance] = useState()
     const [cdres, setCdres] = useState()
     const [hordeAttendance, setHordeAttendance] = useState()
@@ -116,19 +119,31 @@ const RolePage = (props) => {
 
     const selectRole = (v) => {
         setRole(v)
+        setStates(null, true)
         actions.role.fetchRole({paramrole_id:v}).then(result=>{
             setStates(result)
         })
     }
 
-    const setStates = (result) => {
-        setCdres(result?.data?.cdres)
-        setAllianceAttendance(mapToAttendance(result?.data?.allianceroleattendres))
-        setHordeAttendance(mapToAttendance(result?.data?.horderoleattendres))
-        setAllianceRaids(result?.data?.allianceraidres)
-        setAllianceScore(mapToScore(result?.data?.alliancerolescoreres))
-        setHordeRaids(result?.data?.horderaidres)
-        setHordeScore(mapToScore(result?.data?.horderolescoreres))
+    const setStates = (result, setInitial=false) => {
+        if (setInitial){
+            setCdres(undefined)
+            setAllianceAttendance(undefined)
+            setHordeAttendance(undefined)
+            setAllianceRaids(undefined)
+            setAllianceScore(undefined)
+            setHordeRaids(undefined)
+            setHordeScore(undefined)
+        }else{
+            setCdres(result?.data?.cdres)
+            setAllianceAttendance(mapToAttendance(result?.data?.allianceroleattendres))
+            setHordeAttendance(mapToAttendance(result?.data?.horderoleattendres))
+            setAllianceRaids(result?.data?.allianceraidres)
+            setAllianceScore(mapToScore(result?.data?.alliancerolescoreres))
+            setHordeRaids(result?.data?.horderaidres)
+            setHordeScore(mapToScore(result?.data?.horderolescoreres))
+        }
+
     }
 
     const mapToAttendance = (data) =>{
@@ -138,7 +153,8 @@ const RolePage = (props) => {
             attend.sum = record.attend?.length
             attend.miss = record.attend?.reduce((acc,item)=>acc + checkAttendance(Object.values(item)[0]) ? 0 : 1 ,0)
             attend.attends = attend.sum - attend.miss
-            attend.rate =  (attend.attends/attend.sum).toLocaleString('en', {style: 'percent'})
+            attend.rate = record.attend?.length===0 ? 0 :
+                (attend.attends/attend.sum)
             return Object.assign(record, attend)
         })
         return result
@@ -149,8 +165,9 @@ const RolePage = (props) => {
         result = data!=='' && data?.map(record=>{
             let score = record.score?.reduce((acc,item)=>Object.assign(acc,item),{})
             score.count = record.score?.reduce((acc,item)=>acc + (Object.values(item)[0]=== '' ? 0 : 1) ,0)
-            score.sum = record.score?.reduce((acc,item)=>acc + Object.values(item)[0] ,0)
-            score.avg =  (score.sum/score.count).toFixed(1)
+            score.sum = Number.parseInt(record.score?.reduce((acc,item)=>
+                acc +(Object.values(item)[0]=== '' ? 0 : Object.values(item)[0]) ,0))
+            score.avg = score.count===0 ? 0 : (score.sum/score.count).toFixed(1)
             return Object.assign(record, score)
         })
         return result

@@ -75,12 +75,14 @@ const RaidPage = (props) => {
             />)
     }
 
-    const roleTable = (roleData) =>{
+    const roleTable = (roleData, raidData) =>{
         const columns = [
             {
                 title: '职业天赋',
                 dataIndex: 'paramrolename',
-                render: (text, item)=> <Link to={`/role/${item.paramroleid}`}>{text}</Link>
+                render: (text, item)=> <Link
+                    to={{pathname: `/role/${item.paramroleid}`, state: {faction: raidData.raid.paramfaction_id}}}
+                >{text}</Link>
             },
             {
                 title: '人数',
@@ -116,7 +118,7 @@ const RaidPage = (props) => {
             <Descriptions title={raid.name}>
                 <Descriptions.Item label="阵营">
                     <Badge
-                        status={globalConstants.FACTION_STATUS[raid.paramcd_id]?.status.toLowerCase()}
+                        status={globalConstants.FACTION_STATUS[raid.paramfaction_id]?.status.toLowerCase()}
                         text={raid.pfname}
                     />
                 </Descriptions.Item>
@@ -141,7 +143,7 @@ const RaidPage = (props) => {
             props.raidData && <Space direction="vertical">
                 {description(props.raidData)}
                 {playerTable(props.raidData)}
-                {roleData && roleTable(roleData)}
+                {roleData && roleTable(roleData, props.raidData)}
             </Space>
         )
     }

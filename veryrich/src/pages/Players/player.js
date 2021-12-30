@@ -13,13 +13,18 @@ const mapStateToProps = state => ({
 
 const PlayerPage = (props) => {
     const {playerId} = props.match.params
-    useEffect(()=>{actions.player.fetchPlayer({id: playerId})},[playerId])
+    useEffect(()=>{
+        actions.player.fetchPlayer({id: playerId})
+        return actions.player.save({playerData: null})
+    },[playerId])
     const roleTable = (playerData) =>{
         const columns = [
             {
                 title: '队员职业天赋名称',
                 dataIndex: 'name',
-                render: (text, item)=> <Link to={`/role/${item.paramrole_id}`}>{text}</Link>
+                render: (text, item)=> <Link
+                    to={{pathname: `/role/${item.paramrole_id}`, state: {faction: item.paramfaction_id}}}
+                >{text}</Link>
             },
         ]
         return(

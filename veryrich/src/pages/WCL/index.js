@@ -3,12 +3,8 @@ import _ from 'lodash'
 import {Button, Input, Table, Card, Col, Row} from 'antd'
 import {actions, connect} from 'mirrorx'
 import {globalConstants} from '../../globalConstants'
-import ReactExport from 'react-data-export'
 import TacticalTable from './Tactical'
 
-const ExcelFile = ReactExport.ExcelFile
-const ExcelSheet = ReactExport.ExcelFile.ExcelSheet
-const ExcelColumn = ReactExport.ExcelFile.ExcelColumn
 
 class DashboardPage extends Component{
 
@@ -96,11 +92,9 @@ class DashboardPage extends Component{
     }
 
     render() {
-        const {fightsData} = this.props
         const tactics = this.mergeTactics()
         const {tactical, loading} = this.state
         const dataSource =  this.generateSource()
-        const excelDataSource = fightsData
         const columns = [
             {
                 title: 'ID',
@@ -206,20 +200,6 @@ class DashboardPage extends Component{
                     <Button onClick={this.submit}>提交</Button>
                 </Col>
                 {!tactical && <Col><Button onClick={this.downloadExcel}>生成下载链接</Button></Col>}
-                {excelDataSource &&  <Col><ExcelFile element={<Button>下载</Button>}>
-                    <ExcelSheet data={excelDataSource} name="原始数据">
-                        <ExcelColumn label="mark" value="mark"/>
-                        <ExcelColumn label="BattleID" value="BattleID"/>
-                        <ExcelColumn label="BattleName" value="BattleName"/>
-                        <ExcelColumn label="StartTime" value="StartTime"/>
-                        <ExcelColumn label="EndTime" value="EndTime"/>
-                        <ExcelColumn label="class" value="class"/>
-                        <ExcelColumn label="name" value="name"/>
-                        <ExcelColumn label="damage-done" value="damageDone"/>
-                        <ExcelColumn label="healing" value="healing"/>
-                    </ExcelSheet>
-                </ExcelFile>
-                </Col>}
             </Row>}>
                 {tactical ?
                     <TacticalTable

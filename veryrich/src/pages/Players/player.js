@@ -4,6 +4,7 @@ import ProTable from '@ant-design/pro-table'
 import {globalConstants} from '../../globalConstants'
 import {useEffect} from 'react'
 import {Descriptions, Badge, Space } from 'antd'
+import {ClassColorText} from '../../utility/common'
 
 const mapStateToProps = state => ({
     paramrole: state.common.paramrole,
@@ -13,10 +14,16 @@ const mapStateToProps = state => ({
 
 const PlayerPage = (props) => {
     const {playerId} = props.match.params
+
+    useEffect(()=>{
+        !props.paramrole && actions.common.fetchAllParams()
+    },[props.paramrole])
+
     useEffect(()=>{
         actions.player.fetchPlayer({id: playerId})
         return actions.player.save({playerData: null})
     },[playerId])
+
     const roleTable = (playerData) =>{
         const columns = [
             {
@@ -24,7 +31,11 @@ const PlayerPage = (props) => {
                 dataIndex: 'name',
                 render: (text, item)=> <Link
                     to={{pathname: `/role/${item.paramrole_id}`, state: {faction: item.paramfaction_id}}}
-                >{text}</Link>
+                ><ClassColorText
+                        text={text}
+                        color={props.paramrole?.find(role=>role.id===item.paramrole_id)?.color}
+                    />
+                </Link>
             },
         ]
         return(

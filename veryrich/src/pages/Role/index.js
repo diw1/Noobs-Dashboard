@@ -4,6 +4,7 @@ import ProTable from '@ant-design/pro-table'
 import {Fragment, useEffect, useState} from 'react'
 import {globalConstants} from '../../globalConstants'
 import {Space, Select, Radio, Card, Badge} from 'antd'
+import {ClassColorText} from '../../utility/common'
 
 const mapStateToProps = state => ({
     paramrole: state.common.paramrole,
@@ -186,7 +187,11 @@ const RolePage = (props) => {
     },[match.params.roleId])
 
     const roleOptions =  paramrole?.map(role=>(
-        <Select.Option key={role.id} value={role.id}>{role.name}</Select.Option>
+        <Select.Option key={role.id} value={role.id}>
+            <ClassColorText
+                text={role.name}
+                color={role.color}
+            /></Select.Option>
     ))
 
     return (

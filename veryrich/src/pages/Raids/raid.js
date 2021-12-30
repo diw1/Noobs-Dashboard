@@ -5,6 +5,7 @@ import moment from 'moment'
 import {globalConstants} from '../../globalConstants'
 import {useEffect, useState} from 'react'
 import {Descriptions, Badge, Space} from 'antd'
+import {ClassColorText} from '../../utility/common'
 
 const mapStateToProps = state => ({
     paramrole: state.common.paramrole,
@@ -14,6 +15,11 @@ const mapStateToProps = state => ({
 const RaidPage = (props) => {
     const {raidId} = props.match.params
     const [roleData, setRoleData] = useState()
+
+    useEffect(()=>{
+        !props.paramrole && actions.common.fetchAllParams()
+    },[props.paramrole])
+
     useEffect(()=>{
         actions.raid.fetchRaid({id: raidId}).then(result=>{
             let sum = {}
@@ -49,7 +55,10 @@ const RaidPage = (props) => {
                 title: '职业天赋',
                 dataIndex: 'paramrolename',
                 sorter: (a, b) => a.paramroleid - b.paramroleid,
-                render: (text, item)=> <Link to={`/role/${item.paramroleid}`}>{text}</Link>
+                render: (text, item)=> <Link to={`/role/${item.paramroleid}`}>{<ClassColorText
+                    text={text}
+                    color={props.paramrole?.find(role=>role.id===item.paramroleid)?.color}
+                />}</Link>
             },
             {
                 title: '分数',
@@ -82,7 +91,10 @@ const RaidPage = (props) => {
                 dataIndex: 'paramrolename',
                 render: (text, item)=> <Link
                     to={{pathname: `/role/${item.paramroleid}`, state: {faction: raidData.raid.paramfaction_id}}}
-                >{text}</Link>
+                ><ClassColorText
+                        text={text}
+                        color={props.paramrole?.find(role=>role.id===item.paramroleid)?.color}
+                    /></Link>
             },
             {
                 title: '人数',

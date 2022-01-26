@@ -30,7 +30,8 @@ const PlayersPage = (props) => {
             {
                 title: '昵称',
                 dataIndex: 'title',
-                render: text=> text && text!== 'null' ? text : ''
+                render: text=> text && text!== 'null' ? text : '',
+                search: false
             },
             {
                 title: '考核状态',

@@ -1,9 +1,8 @@
 import {Component} from 'react'
-import _ from 'lodash'
-import {Button, Input, Table, Card, Col, Row} from 'antd'
+import {Button, Input, Table, Card, Col, Row, Switch, Tooltip} from 'antd'
 import {actions, connect} from 'mirrorx'
+import {QuestionCircleOutlined} from '@ant-design/icons'
 import {globalConstants} from '../../globalConstants'
-import TacticalTable from './Tactical'
 
 
 class DashboardPage extends Component{
@@ -14,40 +13,26 @@ class DashboardPage extends Component{
             report: null,
             loading: false,
             manual: [],
-            tactical: false
+            cnWCL: localStorage.getItem('cnWCL')? JSON.parse(localStorage.getItem('cnWCL')) : false
         }
-    }
-
-    downloadExcel = () => {
-        const {report} = this.state
-        this.setState({loading: true})
-        let promises = []
-        promises.push(actions.report.getBOSSDmg(report))
-        promises.push(actions.report.getFight(report))
-        Promise.all(promises).then(()=>{
-            actions.report.getFightsData(report).then(()=>{this.setState({loading: false})})
-        })
     }
 
     submit = () => {
         const { report} = this.state
         let promises = []
         this.setState({loading: true})
-        promises.push(actions.report.getBOSSDmg(report))
-        // promises.push(actions.report.getFight(report))
-        promises.push(actions.report.getAlarDebuff(report))
-        promises.push(actions.report.getLurkerSpout(report))
-        promises.push(actions.report.getKaelFlame(report))
-        promises.push(actions.report.getVashjCleave(report))
+        promises.push(actions.report.getHealing(report))
+        promises.push(actions.report.getSummary(report))
+        promises.push(actions.report.getFightDebuff(report))
+        promises.push(actions.report.getEmergencyHealing(report))
         Promise.all(promises).then(()=>{
             promises = []
-            // if (tactical){
-            //     return
-            // }else {
-            //     const trashIds = this.findTargetIds(globalConstants.TRASHIDS, this.props.fight)
-            //     const removedBossIds = this.findTargetIds(globalConstants.REMOVEBOSSIDS, this.props.fight)
-            //     promises.push(actions.report.getBossTrashDmg({trashIds, reportId: report, removedBossIds}))
-            // }
+            promises.push(actions.report.getRunes(report))
+            promises.push(actions.report.getManaPotion(report))
+            promises.push(actions.report.getLifeBloomHealing(report))
+            promises.push(actions.report.getEarthShield(report))
+            promises.push(actions.report.getBossFightArmorBuff(report))
+            promises.push(actions.report.getLightGraceBuff(report))
             Promise.all(promises).then(()=>{
                 this.setState({loading: false})
             })
@@ -60,40 +45,59 @@ class DashboardPage extends Component{
         return enemies.map(enemy=>trashIds.includes(enemy.guid)&&enemy.id).filter(id=>!!id)
     }
 
+    calculateLifeBloom = (tankIds, lifeBloom) => {
+        const totalTime = lifeBloom?.totalTime
+        let sum = 0
+        tankIds.map(tankId=>{
+            const tankEntry = lifeBloom?.entries.find(entry=>tankId===entry.id)
+            if (tankEntry) sum = sum + tankEntry.total/tankEntry.tickCount*tankEntry.uptime
+        })
+        return (sum/totalTime).toFixed(2)
+    }
+
     generateSource = () => {
-        const {bossDmg, alarDebuff, lurkerSpout, kaelFlame, vashjCleave} = this.props
-        let source = bossDmg?.map(entry=>{
-            const alar = parseInt(alarDebuff?.filter(id=>id===entry.id).length)
-            const lurker = lurkerSpout?.includes(entry.id)
-            const kael = kaelFlame?.find(i=>i.id===entry.id)?.total || 0
-            const vashj = vashjCleave?.find(i=>i.id===entry.id)?.total || 0
-            console.log(parseInt(kael*globalConstants.KAEL_FINE))
+        const {healing, emergencyHealing, tankIds, healerIds, runes, manaPotion, bossFightDebuff, bossTrashDebuff, druidLifeBloom, shamanEarthShield, bossFightExtraArmorBuff, lightGraceBuff} = this.props
+        return healing?.filter(entry=>healerIds?.find(id=>id===entry.id))?.map(entry=>{
+            const emergency = emergencyHealing?.find(i=>i.id===entry.id)?.total || 0
+            const runesCasts = runes?.find(trashEntry=>trashEntry.id===entry.id)?.runes
+            const manaPotionCasts = manaPotion?.find(trashEntry=>trashEntry.id===entry.id)?.manaPotion || 0
+            const bossFF = parseFloat(bossFightDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUptime/bossFightDebuff?.totalTime*100).toFixed(2)
+            const bossFFCast = bossFightDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUses
+            const trashFF = parseFloat(bossTrashDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUptime/bossTrashDebuff?.totalTime*100).toFixed(2)
+            const trashFFCast = bossTrashDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUses
+            const lifeBloom = this.calculateLifeBloom(tankIds,druidLifeBloom)
+            const earthShield = shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffPercent.toFixed(2) * 100
+            const earthShieldCast = shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffCast
+            const lightGrace = parseFloat(lightGraceBuff?.auras?.find(trashEntry=>trashEntry.id===entry.id)?.totalUptime / lightGraceBuff?.totalTime*100).toFixed(1)
             return {
                 id: entry.id,
                 name: entry.name,
                 type: entry.type,
-                bossDmg: entry.total,
-                alarDebuff: alar,
-                lurkerSpout: lurker,
-                kaelFlame:kael,
-                vashjCleave: vashj,
-                final:Number(alar*globalConstants.ALAR_FINE)+Number(lurker ?globalConstants.LURKER_FINE:0)+
-                parseInt(kael*globalConstants.KAEL_FINE)+ (vashj>0?globalConstants.VASHJ_FINE:0)
+                healing: entry.total,
+                emergency,
+                runesCasts,
+                manaPotionCasts,
+                bossFF,
+                bossFFCast,
+                trashFF,
+                trashFFCast,
+                lifeBloom,
+                earthShield,
+                earthShieldCast,
+                bossFightExtraArmorBuff,
+                lightGrace
             }
         })
 
-        return source
     }
 
-    mergeTactics = () => {
-        const {slimeTactics, thaddiusTactics, fourTactics, spiderTactics} = this.props
-        const tacticsArray = [slimeTactics, thaddiusTactics, fourTactics, spiderTactics]
-        return tacticsArray.reduce((sum,item)=>_.zipWith(sum, item, (a,b,)=>({...a,...b})))
+    handleLocaleChange = (v) => {
+        localStorage.setItem('cnWCL', JSON.stringify(v))
+        this.setState({cnWCL: v})
     }
 
     render() {
-        const tactics = this.mergeTactics()
-        const {tactical, loading} = this.state
+        const {loading, cnWCL} = this.state
         const dataSource =  this.generateSource()
         const columns = [
             {
@@ -145,51 +149,88 @@ class DashboardPage extends Component{
                 onFilter: (value, record) => record.type === value ,
             },
             {
-                title: 'Boss伤害',
-                dataIndex: 'bossDmg',
-                sorter: (a, b) => a.bossDmg-b.bossDmg,
+                title: '治疗量',
+                dataIndex: 'healing',
+                sorter: (a, b) => a.healing-b.healing,
+                defaultSortOrder: 'descend',
             },
             {
-                title: `奥踩火三秒以上(${globalConstants.ALAR_FINE}G/次)`,
-                dataIndex: 'alarDebuff',
-                render: (text, record) => record.alarDebuff>0 ? text+'次': null
+                title: '坦克急救治疗',
+                dataIndex: 'emergency',
+                sorter: (a, b) => a.emergency-b.emergency,
             },
             {
-                title: '王子烈焰风暴(1000伤害80G)',
-                dataIndex: 'kaelFlame',
-                sorter: (a, b) => a.kaelFlame-b.kaelFlame,
+                title: '大蓝',
+                dataIndex: 'manaPotionCasts',
+                sorter: (a, b) => a.manaPotionCasts-b.manaPotionCasts,
             },
             {
-                title: `鱼斯拉喷涌(${globalConstants.LURKER_FINE}G)`,
-                dataIndex: 'lurkerSpout',
-                render: (text, record) => record.lurkerSpout && '菜逼被喷飞'
+                title: '符文',
+                dataIndex: 'runesCasts',
+                sorter: (a, b) => a.runesCasts-b.runesCasts,
             },
             {
-                title: `瓦斯琪顺劈伤害(有伤害即${globalConstants.VASHJ_FINE}G)`,
-                dataIndex: 'vashjCleave',
-                sorter: (a, b) => a.vashjCleave-b.vashjCleave,
+                title: '奶德',
+                children: [
+                    {
+                        title: <Tooltip title="坦克的绽放平均hot值（包含过量）*buff覆盖率的总和">
+                            <span>坦克三花数据<QuestionCircleOutlined /></span>
+                        </Tooltip>,
+                        dataIndex: 'lifeBloom',
+                        render: (text, record)=> record.type === 'Druid' && text
+                    },
+                    {
+                        title: '精灵火覆盖率(施法)',
+                        children: [{
+                            title: 'Boss',
+                            dataIndex: 'bossFF',
+                            render: (text, record)=> record.type === 'Druid' && `${text}%(${record.bossFFCast})`
+                        },{
+                            title: '全程',
+                            dataIndex: 'trashFF',
+                            render: (text, record)=> record.type === 'Druid' && `${text}%(${record.trashFFCast})`
+                        },]
+                    },
+                ]
             },
             {
-                title: '瓦斯琪踩毒两秒以上(300G/次)',
-                dataIndex: 'alarDebuff',
-                render: (text, record) => record.alarDebuff>0 ? text+'次': null
+                title: '奶萨',
+                children: [
+                    {
+                        title: '大地盾覆盖率(施法)',
+                        dataIndex: 'earthShield',
+                        render: (text, record)=> record.type === 'Shaman' && `${text}%(${record.earthShieldCast})`
+                    },
+                    {
+                        title: <Tooltip title="包括灵感在内">
+                            <span>boss战坦克先祖<QuestionCircleOutlined /></span>
+                        </Tooltip>,
+                        render: (text, record)=> record.type === 'Shaman' && record.bossFightExtraArmorBuff?.map(item=><div key={item.id}>{item.name}: {(item.armorPercent*100).toFixed(1)}%</div>)
+                    },
+                ]
             },
             {
-                title: '总罚款',
-                dataIndex: 'final',
-                sorter: (a, b) => a.final-b.final,
+                title: '奶骑',
+                children: [
+                    {
+                        title: '圣光之赐覆盖率',
+                        dataIndex: 'lightGrace',
+                        render: (text, record)=> record.type === 'Paladin' && `${text}%`
+                    },
+                ]
             },
+
         ]
         return (
             <Card title={<Row type="flex" gutter={16}>
-                {/*<Col>*/}
-                {/*    <Switch*/}
-                {/*        checked={tactical}*/}
-                {/*        onChange={(checked)=>this.setState({tactical: checked})}*/}
-                {/*        checkedChildren="战术动作"*/}
-                {/*        unCheckedChildren="伤害统计"*/}
-                {/*    />*/}
-                {/*</Col>*/}
+                <Col>
+                    <Switch
+                        checked={cnWCL}
+                        onChange={this.handleLocaleChange}
+                        checkedChildren="国服"
+                        unCheckedChildren="外服"
+                    />
+                </Col>
                 <Col>
                     <Input
                         style={{width: 400}}
@@ -199,23 +240,18 @@ class DashboardPage extends Component{
                 <Col>
                     <Button onClick={this.submit}>提交</Button>
                 </Col>
-                {!tactical && <Col><Button onClick={this.downloadExcel}>生成下载链接</Button></Col>}
             </Row>}>
-                {tactical ?
-                    <TacticalTable
-                        loading={loading}
-                        tactics={tactics}
-                    /> :
-                    <Table
-                        rowClassName={record => record.type}
-                        size="small"
-                        loading={loading}
-                        dataSource={dataSource}
-                        columns={columns}
-                        rowKey='id'
-                        pagination={false}
-                    />
-                }
+
+                <Table
+                    rowClassName={record => record.type}
+                    size="small"
+                    loading={loading}
+                    dataSource={dataSource}
+                    columns={columns}
+                    rowKey='id'
+                    pagination={false}
+                />
+
             </Card>
         )
     }

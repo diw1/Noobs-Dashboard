@@ -38,7 +38,7 @@
     // should add prop-types in future
     "react/no-find-dom-node": 0,
     // should remove findDomNode in future
-    "max-len": ["warn", { "code": 140 }],
+    "max-len": ["warn", { "code": 1400 }],
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
     "react/jsx-uses-react": "off",

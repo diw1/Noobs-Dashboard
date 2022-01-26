@@ -3,6 +3,7 @@ import {Button, Input, Table, Card, Col, Row, Switch, Tooltip} from 'antd'
 import {actions, connect} from 'mirrorx'
 import {QuestionCircleOutlined} from '@ant-design/icons'
 import {globalConstants} from '../../globalConstants'
+import Logo from '../../image/logo_with_title.png'
 
 
 class DashboardPage extends Component{
@@ -222,7 +223,8 @@ class DashboardPage extends Component{
 
         ]
         return (
-            <Card title={<Row type="flex" gutter={16}>
+            <Card title={<Row type="flex" gutter={16} align="middle">
+                <img src={Logo} width={100}/>
                 <Col>
                     <Switch
                         checked={cnWCL}

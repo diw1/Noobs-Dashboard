@@ -44,8 +44,8 @@ export default (props) => {
             height: '100vh',
             border: '1px solid #ddd',
         }}
-        title="Noobs AOT"
-        // logo={Logo}
+        title="Noobs"
+        logo={Logo}
         route={route}
     >
 

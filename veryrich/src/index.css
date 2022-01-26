@@ -65,3 +65,7 @@ td.ant-table-column-sort{
 .ant-table-tbody > tr.ant-table-row:hover > td{
   background: unset;
 }
+
+.ant-pro-sider-logo img{
+  height: 80px;
+}

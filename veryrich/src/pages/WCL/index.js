@@ -39,7 +39,8 @@ class DashboardPage extends Component{
             promises.push(actions.report.getDispels(report))
             promises.push(actions.report.getL5Arcane(report))
             promises.push(actions.report.checkG4Shaman(report))
-            // promises.push(actions.report.checkPaladinHealing(report))
+            promises.push(actions.report.getTankRenewBuff(report))
+            promises.push(actions.report.getPriestShield(report))
             promises.push(actions.report.checkHealingToTank(report))
             Promise.all(promises).then(()=>{
                 this.setState({loading: false})
@@ -63,13 +64,13 @@ class DashboardPage extends Component{
         return (sum/totalTime).toFixed(2)
     }
 
-    calculatePOM = (tankIds, pom) => {
+    calculatePOM = (tankIds, pom, time) => {
         let sum = 0
         tankIds.map(tankId=>{
             const tankEntry = pom?.entries.find(entry=>tankId===entry.id)
             if (tankEntry) sum = sum + tankEntry.total
         })
-        return sum
+        return [sum, sum/time*1000]
     }
 
     calculatePercentScore = (record) => {
@@ -92,11 +93,11 @@ class DashboardPage extends Component{
             pass = record.withShadowPriest ? globalConstants.G4_SHAMAN_PERCENT : globalConstants.G2_SHAMAN_PERCENT
             max = globalConstants.SHAMAN_HEALING_MAX
         }
-        return record.percent > pass ? `大于${pass*100}%,合格` : `小于${pass*100}%,不合格,扣${(Math.min(max,(pass-record.percent)/0.002)).toFixed(0)}分`
+        return record.percent > pass ? `大于${pass*100}%,合格` : `小于${pass*100}%,不合格,扣${(Math.min(max,(pass-record.percent)/0.002)).toFixed(2)}分`
     }
 
     generateSource = () => {
-        const {healing, dispels, emergencyHealingTank, emergencyHealingNonTank, tankIds, healerIds, runes, manaPotion, bossFightDebuff,missed_l5_arcane, bossTrashDebuff, prayOfMending, druidLifeBloom, shamanEarthShield, bossFightExtraArmorBuff, lightGraceBuff} = this.props
+        const {healing, fightsSummary, dispels, emergencyHealingTank, emergencyHealingNonTank, tankIds, healerIds, runes, manaPotion, bossFightDebuff,missed_l5_arcane, bossTrashDebuff, prayOfMending, druidLifeBloom, shamanEarthShield, bossFightExtraArmorBuff, lightGraceBuff} = this.props
         return healing?.filter(entry=>healerIds?.find(id=>id===entry.id))?.map(entry=>{
             const emergency = emergencyHealingTank?.find(i=>i.id===entry.id)?.total || 0
             const emergencyPercent = emergencyHealingTank?.find(i=>i.id===entry.id)?.percent || 0
@@ -109,10 +110,10 @@ class DashboardPage extends Component{
             const trashFF = parseFloat(bossTrashDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUptime/bossTrashDebuff?.totalTime*100).toFixed(2)
             const trashFFCast = bossTrashDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUses
             const lifeBloom = this.calculateLifeBloom(tankIds,druidLifeBloom)
-            const pom = this.calculatePOM(tankIds,prayOfMending)
+            const [pom,pomPersecond] = this.calculatePOM(tankIds,prayOfMending, fightsSummary?.totalTime)
             const earthShield = shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffPercent.toFixed(2) * 100
             const earthShieldCast = shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffCast
-            const lightGrace = parseFloat(lightGraceBuff?.auras?.find(trashEntry=>trashEntry.id===entry.id)?.totalUptime / lightGraceBuff?.totalTime*100).toFixed(1)
+            const lightGrace = parseFloat(lightGraceBuff?.auras?.find(trashEntry=>trashEntry.id===entry.id)?.totalUptime / lightGraceBuff?.totalTime*100).toFixed(2)
             const dispelCasts = dispels?.find(trashEntry=>trashEntry.id===entry.id)?.total
             return {
                 ...entry,
@@ -133,7 +134,8 @@ class DashboardPage extends Component{
                 lightGrace,
                 dispelCasts,
                 missed_l5_arcane,
-                pom
+                pom,
+                pomPersecond
             }
         })
 
@@ -151,6 +153,8 @@ class DashboardPage extends Component{
             {
                 title: 'ID',
                 dataIndex: 'name',
+                width: 80,
+                fixed: 'left',
             },
             {
                 title: '职业',
@@ -201,7 +205,7 @@ class DashboardPage extends Component{
                 dataIndex: 'total',
                 sorter: (a, b) => a.total-b.total,
                 defaultSortOrder: 'descend',
-                render: (text, record)=> <span><div>{text}</div><div>{(record.percent*100).toFixed(2)}%,{this.calculatePercentScore(record)}</div></span>
+                render: (text, record)=> <span><div>{text},</div><div>{(record.percent*100).toFixed(2)}%,{this.calculatePercentScore(record)}</div></span>
             },
             {
                 title: <Tooltip title="括号中第一个值是你对坦克的治疗占你治疗的百分比，第二个值是你对坦克的治疗占坦克受到治疗的百分比。">
@@ -209,7 +213,7 @@ class DashboardPage extends Component{
                 </Tooltip>,
                 dataIndex: 'healingToTank',
                 sorter: (a, b) => a.healingToTank-b.healingToTank,
-                render: (text, record)=> <span><div>{text}</div><div>{record.healingToTankPercent}%,{record.tankHealingReceivedPercent}%</div></span>
+                render: (text, record)=> <span><div>{text},</div><div>{record.healingToTankPercent}%,{record.tankHealingReceivedPercent}%</div></span>
             },
             {
                 title: <Tooltip title="对坦克血在50%以下时的直接治疗量">
@@ -250,18 +254,18 @@ class DashboardPage extends Component{
                             <span>坦克三花(10分)<QuestionCircleOutlined /></span>
                         </Tooltip>,
                         dataIndex: 'lifeBloom',
-                        render: (text, record)=> record.type === 'Druid' && `${text}(${record.lifeBloom>globalConstants.LIFEBLOOM_MAX?10 : (record.lifeBloom/globalConstants.LIFEBLOOM_COEFFICIENT).toFixed(0)}分)`
+                        render: (text, record)=> record.type === 'Druid' && `${text}(${record.lifeBloom>globalConstants.LIFEBLOOM_MAX?10 : (record.lifeBloom/globalConstants.LIFEBLOOM_COEFFICIENT).toFixed(2)}分)`
                     },
                     {
                         title: '精灵火覆盖率(施法)',
                         children: [{
                             title: 'Boss(10分)',
                             dataIndex: 'bossFF',
-                            render: (text, record)=> record.type === 'Druid' && `${text}%(${record.bossFFCast}次,${(Number.parseFloat(text)/10).toFixed(0)}分)`
+                            render: (text, record)=> record.type === 'Druid' && `${text}%(${record.bossFFCast}次,${(Number.parseFloat(text)/10).toFixed(2)}分)`
                         },{
                             title: '全程(覆盖和施法各5)',
                             dataIndex: 'trashFF',
-                            render: (text, record)=> record.type === 'Druid' && `${text}%,${(Number.parseFloat(text)/20).toFixed(0)}分(${record.trashFFCast}次,${Math.min(5,(record.trashFFCast/50)).toFixed(0)}分)`
+                            render: (text, record)=> record.type === 'Druid' && `${text}%,${(Number.parseFloat(text)/20).toFixed(2)}分(${record.trashFFCast}次,${Math.min(5,(record.trashFFCast/50)).toFixed(2)}分)`
                         },]
                     },
                 ]
@@ -272,12 +276,13 @@ class DashboardPage extends Component{
                     {
                         title: '大地盾覆盖(施法)(5分)',
                         dataIndex: 'earthShield',
-                        render: (text, record)=> record.type === 'Shaman' && `${text}%(${record.earthShieldCast}),${(Number.parseFloat(text)>70? 5 : Number.parseFloat(text)<40 ? 0 : (Number.parseFloat(text)-40)/6).toFixed(0)}分`
+                        render: (text, record)=> record.type === 'Shaman' && `${text}%(${record.earthShieldCast}),${(Number.parseFloat(text)>70? 5 : Number.parseFloat(text)<40 ? 0 : (Number.parseFloat(text)-40)/6).toFixed(2)}分`
                     },
                     {
                         title: <Tooltip title="包括灵感在内">
                             <span>boss战坦克先祖<QuestionCircleOutlined /></span>
                         </Tooltip>,
+                        width: 150,
                         render: (text, record)=> record.type === 'Shaman' && record.bossFightExtraArmorBuff?.map(item=><div key={item.id}>{item.name}: {(item.armorPercent*100).toFixed(1)}%</div>)
                     },
                 ]
@@ -308,10 +313,27 @@ class DashboardPage extends Component{
                     },
                     {
                         title: <Tooltip title="坦克愈合祷言(包含过量)总和">
-                            <span>坦克愈合数据(5分)<QuestionCircleOutlined /></span>
+                            <span>坦克愈合(5分)<QuestionCircleOutlined /></span>
                         </Tooltip>,
                         dataIndex: 'pom',
-                        render: (text, record)=> record.type === 'Priest' && `${text}`
+                        render: (text, record)=> record.type === 'Priest' && `${text}(${record.pomPersecond.toFixed(1)})${globalConstants.POM_HPS_CAP-record.pomPersecond>0 ?
+                            `${(5-(globalConstants.POM_HPS_CAP-record.pomPersecond)/3).toFixed(2)}分`: '5分'} `
+                    },
+                    {
+                        title: <Tooltip title="BOSS战所有坦克恢复buff覆盖率的总和">
+                            <span>坦克恢复(5分)<QuestionCircleOutlined /></span>
+                        </Tooltip>,
+                        dataIndex: 'renewOnTank',
+                        render: (text, record)=> record.type === 'Priest' && `${(text*100).toFixed(1)}%(${globalConstants.RENEW_CAP-text>0 ?
+                            `${(5-(globalConstants.RENEW_CAP-text)/0.02).toFixed(2)}分`: '5分'}) `
+                    },
+                    {
+                        title: <Tooltip title="每分钟套盾次数">
+                            <span>套盾次数(5分)<QuestionCircleOutlined /></span>
+                        </Tooltip>,
+                        dataIndex: 'shieldCast',
+                        render: (text, record)=> record.type === 'Priest' && `${text}(${record.shieldCastPerMinute?.toFixed(2)})${globalConstants.SHIELD_MINUTE_CAP-record.shieldCastPerMinute>0 ? 
+                            `${(5-(globalConstants.SHIELD_MINUTE_CAP-record.shieldCastPerMinute)*10).toFixed(2)}分`: '5分'} `
                     },
                 ]
             },

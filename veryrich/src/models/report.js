@@ -70,7 +70,7 @@ export default {
 
         async getFightDebuff(reportId){
             const bossResult = await service.getTables(reportId,'debuffs', {hostility:1, encounter:-2})
-            const trashResult = await service.getTables(reportId,'debuffs', {hostility:1})
+            const trashResult = await service.getTables(reportId,'debuffs', {hostility:1, encounter: 0})
             actions.report.save({
                 bossFightDebuff: bossResult.data,
                 bossTrashDebuff: trashResult.data
@@ -152,6 +152,26 @@ export default {
             }))
         },
 
+        async getPriestShield(reportId){
+            const fightsSummary = actions.report.getS().report.fightsSummary
+            const priests = fightsSummary?.playerDetails?.healers?.filter(player=>player.type==='Priest')
+            const fightTimeMinute = fightsSummary?.totalTime/60000
+            let sum = priests?.map(async (priest) => {
+
+                const castResult = await service.getTables(reportId,'casts', {
+                    abilityid: globalConstants.SHIELD_ID,
+                    sourceid: priest.id
+                })
+                const shieldCast = castResult.data?.entries?.reduce((acc,item)=>acc+item.total,0)
+                const shieldCastPerMinute = shieldCast/fightTimeMinute
+                return {...priest, shieldCast, shieldCastPerMinute}
+            })
+            Promise.all(sum).then(records=>{
+                const healing = actions.report.getS().report.healing.map(player=>({...player, ...records.find(record=>record.id === player.id)}))
+                actions.report.save({healing})
+            })
+        },
+
         async checkG4Shaman(reportId){
             const shamans = actions.report.getS().report.healing?.filter(player=>player.type==='Shaman')
             let sum = shamans?.map(async (shaman) => {
@@ -168,30 +188,6 @@ export default {
                 actions.report.save({healing})
             })
         },
-
-        // async checkPaladinHealing(reportId){
-        //     const paladins = actions.report.getS().report.fightsSummary?.playerDetails?.healers?.filter(player=>player.type==='Paladin')
-        //     const tankIds = actions.report.getS().report.tankIds
-        //     let sum = paladins?.map(async (paladin) => {
-        //         const result = await service.getTables(reportId,'healing', {
-        //             sourceid: paladin.id,
-        //             by: 'target'
-        //         })
-        //         let totalHealing = result.data?.entries?.reduce((acc,item)=>acc+item.total,0)
-        //         let healingToTank = 0
-        //         tankIds.map(tankId=>{
-        //             const tankEntry = result.data?.entries?.find(entry=>tankId===entry.id)
-        //             if (tankEntry) healingToTank = healingToTank + tankEntry.total
-        //         })
-        //         const healingToTankPercent = (healingToTank/totalHealing * 100).toFixed(1)
-        //
-        //         return {...paladin, healingToTank, healingToTankPercent}
-        //     })
-        //     Promise.all(sum).then(records=>{
-        //         const healing = actions.report.getS().report.healing.map(player=>({...player, ...records.find(record=>record.id === player.id)}))
-        //         actions.report.save({healing})
-        //     })
-        // },
 
         async checkHealingToTank(reportId){
             const tankIds = actions.report.getS().report.tankIds
@@ -211,7 +207,6 @@ export default {
                 totalTanksHealing += totalHealing
             })
             Promise.all(sum).then(records=>{
-                console.log(records, healerRes, totalTanksHealing)
                 const healing = actions.report.getS().report.healing.map(player=>({...player,
                     healingToTank: healerRes[player.id],
                     healingToTankPercent: (healerRes[player.id]/player.total * 100).toFixed(1),
@@ -236,6 +231,27 @@ export default {
             Promise.all(sum).then(records=>actions.report.save({
                 bossFightExtraArmorBuff: records
             }))
+        },
+
+
+        async getTankRenewBuff(reportId){
+            const tanks = actions.report.getS().report.fightsSummary?.playerDetails?.tanks
+            let renewSum = 0
+            let sum = tanks?.map(async (tank) => {
+                const result = await service.getTables(reportId,'buffs', {
+                    sourceid: tank.id,
+                    encounter: -2
+                })
+                const buffPercent = result.data?.auras?.filter(aura=>aura.guid===globalConstants.RENEW_ID)?.reduce(
+                    (acc,item)=>acc+item.totalUptime,0) / result.data.totalTime
+                renewSum += buffPercent
+                return {...tank, renewPercent: buffPercent}
+            })
+            Promise.all(sum).then(()=> {
+                const healing = actions.report.getS().report.healing.map(player=>({...player, renewOnTank: renewSum}))
+                actions.report.save({healing})
+            }
+            )
         },
 
         async getLightGraceBuff(reportId){

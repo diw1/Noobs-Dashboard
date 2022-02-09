@@ -69,3 +69,7 @@ td.ant-table-column-sort{
 .ant-pro-sider-logo img{
   height: 80px;
 }
+
+.ant-table-cell-fix-left{
+  background: unset;
+}

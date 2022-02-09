@@ -1,7 +1,6 @@
 import PageLayout from '../Layout'
 import {actions, connect, Link} from 'mirrorx'
 import ProTable from '@ant-design/pro-table'
-import moment from 'moment'
 import {useEffect} from 'react'
 import {globalConstants} from '../../globalConstants'
 

@@ -12,7 +12,8 @@ export default {
         healerIds: null,
         dpsIds: null,
         fightSummary: null,
-        emergencyHealing: null,
+        emergencyHealingTank: null,
+        emergencyHealingNonTank: null,
         manaPotion: null,
         runes: null,
         bossFightDebuff: null,
@@ -21,6 +22,10 @@ export default {
         shamanEarthShield: null,
         bossFightExtraArmorBuff: null,
         lightGraceBuff: null,
+        missed_l5_arcane: null,
+        dispels: null,
+        prayOfMending: null,
+
 
         filteredBossDmg:null,
         fight:null,
@@ -57,8 +62,9 @@ export default {
 
         async getHealing(reportId){
             const result = await service.getTables(reportId,'healing')
+            let totalHealing = result.data?.entries?.reduce((acc,item)=>acc+item.total,0)
             actions.report.save({
-                healing: result.data.entries.filter(player=>player.type!=='NPC')
+                healing: result.data.entries.filter(player=>player.type!=='NPC').map(player=>({...player, percent: player.total/totalHealing}))
             })
         },
 
@@ -71,10 +77,20 @@ export default {
             })
         },
 
-        async getEmergencyHealing(reportId){
-            const result = await service.getEmergencyHealing(reportId)
+        async getemergencyHealingTank(reportId){
+            const result = await service.getEmergencyHealingTank(reportId)
+            let totalHealing = result.data?.entries?.filter(player=>player.type!=='NPC').reduce((acc,item)=>acc+item.total,0)
+
             actions.report.save({
-                emergencyHealing: result.data.entries
+                emergencyHealingTank: result.data.entries.map(player=>({...player, percent: (player.total/totalHealing*100).toFixed(1)}))
+            })
+        },
+
+        async getEmergencyHealingNonTank(reportId){
+            const result = await service.getEmergencyHealingNonTank(reportId)
+            let totalHealing = result.data?.entries?.filter(player=>player.type!=='NPC').reduce((acc,item)=>acc+item.total,0)
+            actions.report.save({
+                emergencyHealingNonTank: result.data.entries.map(player=>({...player, percent: (player.total/totalHealing*100).toFixed(1)}))
             })
         },
 
@@ -85,7 +101,6 @@ export default {
             dpsIds = fightsSummary.data?.playerDetails?.dps?.filter(player=>player.specs?.length>0)?.map(player=>player.id)
             tankIds = fightsSummary.data?.playerDetails?.tanks?.map(player=>player.id)
             healerIds = fightsSummary.data?.playerDetails?.healers?.map(player=>player.id)
-
             actions.report.save({
                 fightsSummary: fightsSummary?.data,
                 tankIds,
@@ -102,6 +117,17 @@ export default {
             })
             actions.report.save({
                 druidLifeBloom: result.data
+            })
+        },
+
+        async getPOMHealing(reportId){
+            const result = await service.getTables(reportId,'healing', {
+                options:8,
+                abilityid: globalConstants.POM_ID,
+                sourceid: actions.report.getS().report.fightsSummary?.playerDetails?.healers?.find(player=>player.type==='Priest')?.id
+            })
+            actions.report.save({
+                prayOfMending: result.data
             })
         },
 
@@ -126,6 +152,74 @@ export default {
             }))
         },
 
+        async checkG4Shaman(reportId){
+            const shamans = actions.report.getS().report.healing?.filter(player=>player.type==='Shaman')
+            let sum = shamans?.map(async (shaman) => {
+                const result = await service.getTables(reportId,'resources-gains', {
+                    abilityid: 100,
+                    sourceid: shaman.id
+                })
+                const withShadowPriest = result.data?.resources?.find(resource=>resource.guid===34919)?.gains>50000
+
+                return {...shaman, withShadowPriest}
+            })
+            Promise.all(sum).then(records=>{
+                const healing = actions.report.getS().report.healing.map(player=>({...player, ...records.find(record=>record.id === player.id)}))
+                actions.report.save({healing})
+            })
+        },
+
+        // async checkPaladinHealing(reportId){
+        //     const paladins = actions.report.getS().report.fightsSummary?.playerDetails?.healers?.filter(player=>player.type==='Paladin')
+        //     const tankIds = actions.report.getS().report.tankIds
+        //     let sum = paladins?.map(async (paladin) => {
+        //         const result = await service.getTables(reportId,'healing', {
+        //             sourceid: paladin.id,
+        //             by: 'target'
+        //         })
+        //         let totalHealing = result.data?.entries?.reduce((acc,item)=>acc+item.total,0)
+        //         let healingToTank = 0
+        //         tankIds.map(tankId=>{
+        //             const tankEntry = result.data?.entries?.find(entry=>tankId===entry.id)
+        //             if (tankEntry) healingToTank = healingToTank + tankEntry.total
+        //         })
+        //         const healingToTankPercent = (healingToTank/totalHealing * 100).toFixed(1)
+        //
+        //         return {...paladin, healingToTank, healingToTankPercent}
+        //     })
+        //     Promise.all(sum).then(records=>{
+        //         const healing = actions.report.getS().report.healing.map(player=>({...player, ...records.find(record=>record.id === player.id)}))
+        //         actions.report.save({healing})
+        //     })
+        // },
+
+        async checkHealingToTank(reportId){
+            const tankIds = actions.report.getS().report.tankIds
+            const healerIds = actions.report.getS().report.healerIds
+            let healerRes = healerIds.reduce((acc,curr)=> (acc[curr]=0 ,acc),{})
+            let totalTanksHealing = 0
+            let sum = tankIds?.map(async (tank) => {
+                const result = await service.getTables(reportId,'healing', {
+                    targetid: tank,
+                })
+                const totalHealing = result.data?.entries?.reduce((acc,item)=>acc+item.total,0)
+
+                healerIds.map(healer=>{
+                    const healerEntry = result.data?.entries?.find(entry=>healer===entry.id)
+                    if (healerEntry) healerRes[healer] = healerRes[healer] + healerEntry.total
+                })
+                totalTanksHealing += totalHealing
+            })
+            Promise.all(sum).then(records=>{
+                console.log(records, healerRes, totalTanksHealing)
+                const healing = actions.report.getS().report.healing.map(player=>({...player,
+                    healingToTank: healerRes[player.id],
+                    healingToTankPercent: (healerRes[player.id]/player.total * 100).toFixed(1),
+                    tankHealingReceivedPercent: (healerRes[player.id]/totalTanksHealing * 100).toFixed(1)
+                }))
+                actions.report.save({healing})
+            })
+        },
 
         async getBossFightArmorBuff(reportId){
             const tanks = actions.report.getS().report.fightsSummary?.playerDetails?.tanks
@@ -148,6 +242,29 @@ export default {
             const bossResult = await service.getTables(reportId,'buffs', {abilityid:globalConstants.LIGHT_GRACE_ID})
             actions.report.save({
                 lightGraceBuff: bossResult.data,
+            })
+        },
+
+        async getDispels(reportId){
+            const bossResult = await service.getTables(reportId,'dispels')
+            const dispelArray = bossResult.data?.entries[0]?.entries.map(entry=>entry?.details)?.flat()
+            let result = Array.from(dispelArray.reduce((acc, {total, id, ...r})=>{
+                const key = id
+                const current = acc.get(key) || {...r, total: 0, id}
+                return acc.set(key, {...current, total: current.total + total})
+            }, new Map).values())
+            actions.report.save({
+                dispels: result
+            })
+        },
+
+        async getL5Arcane(reportId){
+            const bossResult = await service.getTables(reportId,'damage-taken', {abilityid:globalConstants.L5_ARCANE_ID})
+            actions.report.save({
+                missed_l5_arcane: bossResult.data?.entries?.reduce((accu,item)=>{
+                    accu += item?.hitdetails[0]?.absorbOrOverheal === 0 ? 1: 0
+                    return accu
+                },0),
             })
         },
 
@@ -259,66 +376,6 @@ export default {
             })
         },
 
-        async getHunterbuff(reportId){
-            const result = await service.getBuffsByAbility(reportId, globalConstants.HUNTERAURA)
-            actions.report.save({
-                hunterAura: result.data.auras
-            })
-        },
-
-        async getSlime({reportId, slimeID}){
-            let result = actions.report.getS().report.tactics
-            //小软的致密伤害
-            service.getDamageDoneByAbilityAndTarget(reportId, globalConstants.DENSE_BOMB, slimeID).then(record=>{
-                result = result.map(entry=>{
-                    let res = _.cloneDeep(entry)
-                    const newCast = record.data.entries.find(i=>i.id===entry.id)?.total
-                    res.dense1 =  Number.isInteger(newCast) ? newCast : 0
-                    return res
-                })
-                actions.report.save({
-                    slimeTactics: result
-                })
-            })
-            //小软的帽子伤害
-            service.getDamageDoneByAbilityAndTarget(reportId, globalConstants.HAT, slimeID).then(record=>{
-                result = result.map(entry=>{
-                    let res = _.cloneDeep(entry)
-                    const newCast = record.data.entries.find(i=>i.id===entry.id)?.total
-                    res.hat =  Number.isInteger(newCast) ? newCast : 0
-                    return res
-                })
-                actions.report.save({
-                    slimeTactics: result
-                })
-            })
-            // 瘟疫1滋补
-            const nothCurse = await service.getDebuffsByAbility(reportId, globalConstants.NOTH_CURSE_ID)
-            service.getBuffsByAbilityAndEncounter(reportId, globalConstants.RESTO, globalConstants.NOTH_ENCOUNTER_ID).then(record=>{
-                result = result.map(entry=>{
-                    let res = _.cloneDeep(entry)
-                    const hasDebuff = nothCurse.data.auras.find(i=>i.id===entry.id)
-                    const hasRes = record.data.auras.find(i=>i.id===entry.id)?.totalUptime > 5000
-                    res.resto =  hasDebuff && !hasRes
-                    return res
-                })
-                actions.report.save({
-                    slimeTactics: result
-                })
-            })
-            //跳舞男迅捷鞋
-            service.getCastsByAbilityAndEncounter(reportId, 0, globalConstants.HEIGAN_ENCOUNTER_ID).then(record=>{
-                result = result.map(entry=>{
-                    let res = _.cloneDeep(entry)
-                    const newCast = record.data.entries.find(i=>i.id===entry.id)?.gear.find(i=>i.id===globalConstants.SWIFT_BOOT_ITEM_ID)? 1 :0
-                    res.swiftBoot =  Number.isInteger(newCast) ? newCast : 0
-                    return res
-                })
-                actions.report.save({
-                    slimeTactics: result
-                })
-            })
-        },
 
         async getThaddius(reportId){
             let result = actions.report.getS().report.tactics

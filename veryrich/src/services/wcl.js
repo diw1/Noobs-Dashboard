@@ -7,8 +7,13 @@ function getTables (reportID, table, params) {
     return getWCLData(url)
 }
 
-function getEmergencyHealing (reportID) {
+function getEmergencyHealingTank (reportID) {
     const url = `${globalConstants.WCL_API_BASE_URL}report/tables/healing/${reportID}?api_key=${globalConstants.API_KEY}&end=${globalConstants.ENDTIME}&boss=-3&difficulty=0&filter=effectiveHealing%20!%3D%200%20AND%20resources.hpPercent%20>%200%20AND%20target.role%20%3D%20"tank"%20AND%20(effectiveHealing%20>%207500%20OR%20(effectiveHealing%20>%206000%20AND%20resources.hpPercent%20<%2090)%20OR%20(effectiveHealing%20>%204500%20AND%20resources.hpPercent%20<%2080)%20OR%20(effectiveHealing%20>%203000%20AND%20resources.hpPercent%20<%2070)%20OR%20(effectiveHealing%20>%201500%20AND%20resources.hpPercent%20<%2060)%20)%0A`
+    return getWCLData(url)
+}
+
+function getEmergencyHealingNonTank (reportID) {
+    const url = `${globalConstants.WCL_API_BASE_URL}report/tables/healing/${reportID}?api_key=${globalConstants.API_KEY}&end=${globalConstants.ENDTIME}&boss=-3&difficulty=0&filter=effectiveHealing%20!%3D%200%20AND%20resources.hpPercent%20>%200%20AND%20target.role%20!%3D%20"tank"%20AND%20(effectiveHealing%20>%205000%20OR%20(effectiveHealing%20>%204000%20AND%20resources.hpPercent%20<%2090)%20OR%20(effectiveHealing%20>%203000%20AND%20resources.hpPercent%20<%2080)%20OR%20(effectiveHealing%20>%202000%20AND%20resources.hpPercent%20<%2070)%20OR%20(effectiveHealing%20>%201000%20AND%20resources.hpPercent%20<%2060)%20)%0A`
     return getWCLData(url)
 }
 
@@ -94,7 +99,8 @@ function getDamageDoneByAbilityAndEncounter (reportID, abilityId, encounterID) {
 
 export default {
     getTables,
-    getEmergencyHealing,
+    getEmergencyHealingTank,
+    getEmergencyHealingNonTank,
     getDMGdone,
     getBOSSDMG,
     getBOSSTrashDmg,

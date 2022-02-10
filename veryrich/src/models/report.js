@@ -82,7 +82,7 @@ export default {
             let totalHealing = result.data?.entries?.filter(player=>player.type!=='NPC').reduce((acc,item)=>acc+item.total,0)
 
             actions.report.save({
-                emergencyHealingTank: result.data.entries.map(player=>({...player, percent: (player.total/totalHealing*100).toFixed(1)}))
+                emergencyHealingTank: result.data.entries.map(player=>({...player, percent: player.total/totalHealing}))
             })
         },
 
@@ -90,7 +90,7 @@ export default {
             const result = await service.getEmergencyHealingNonTank(reportId)
             let totalHealing = result.data?.entries?.filter(player=>player.type!=='NPC').reduce((acc,item)=>acc+item.total,0)
             actions.report.save({
-                emergencyHealingNonTank: result.data.entries.map(player=>({...player, percent: (player.total/totalHealing*100).toFixed(1)}))
+                emergencyHealingNonTank: result.data.entries.map(player=>({...player, percent: player.total/totalHealing}))
             })
         },
 
@@ -209,8 +209,8 @@ export default {
             Promise.all(sum).then(records=>{
                 const healing = actions.report.getS().report.healing.map(player=>({...player,
                     healingToTank: healerRes[player.id],
-                    healingToTankPercent: (healerRes[player.id]/player.total * 100).toFixed(1),
-                    tankHealingReceivedPercent: (healerRes[player.id]/totalTanksHealing * 100).toFixed(1)
+                    healingToTankPercent: healerRes[player.id]/player.total,
+                    tankHealingReceivedPercent: healerRes[player.id]/totalTanksHealing
                 }))
                 actions.report.save({healing})
             })
@@ -351,7 +351,9 @@ export default {
 
         async getRunes(reportId){
             let result = actions.report.getS().report.healing
+            let healerIds = actions.report.getS().report.healerIds
             let promises = []
+            let runeSum = 0
             promises.push(service.getCastsByAbility(reportId, globalConstants.DARK_RUNEID))
             promises.push(service.getCastsByAbility(reportId, globalConstants.DEMON_RUNEID))
             Promise.all(promises).then(trashRecords=>{
@@ -361,6 +363,8 @@ export default {
                         res.runes = res.runes || 0
                         const newCast = trashRecord.data.entries.find(i=>i.id===entry.id)?.total
                         res.runes =  Number.isInteger(newCast) ? res.runes + newCast : res.runes
+                        runeSum = healerIds.includes(entry.id) ? runeSum + (Number.isInteger(newCast) ? newCast :0) : runeSum
+                        res.runeSum = runeSum
                         return res
                     })
                     actions.report.save({
@@ -373,7 +377,9 @@ export default {
 
         async getManaPotion(reportId){
             let result = actions.report.getS().report.healing
+            let healerIds = actions.report.getS().report.healerIds
             let promises = []
+            let potionSum = 0
             globalConstants.MANA_POTION_IDS.map(id=>promises.push(service.getCastsByAbility(reportId, id)))
             Promise.all(promises).then(trashRecords=>{
                 trashRecords.map(trashRecord=>{
@@ -382,6 +388,8 @@ export default {
                         res.manaPotion = res.manaPotion || 0
                         const newCast = trashRecord.data.entries.find(i=>i.id===entry.id)?.total
                         res.manaPotion =  Number.isInteger(newCast) ? res.manaPotion + newCast : res.manaPotion
+                        potionSum = healerIds.includes(entry.id) ? potionSum + (Number.isInteger(newCast) ? newCast :0) : potionSum
+                        res.potionSum = potionSum
                         return res
                     })
                     actions.report.save({

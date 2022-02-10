@@ -43,6 +43,9 @@ export const globalConstants = {
     PALADIN_PERCENT: 0.1,
     PALADIN_HEALING_MAX: 10,
     LIGHT_GRACE_ID: 31834,
+    TANK_EMERGENCY_CAP: 0.35,
+    TANK_HEALING_PERCENT_CAP:0.68,
+    TANK_RECEIVED_PERCENT_CAP:0.185,
 
     // DASHBOARD
     API_BASE_URL: 'http://1.15.154.218/speedrunadmin/public/api',

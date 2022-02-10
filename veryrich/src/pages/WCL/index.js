@@ -4,6 +4,7 @@ import {actions, connect} from 'mirrorx'
 import {QuestionCircleOutlined} from '@ant-design/icons'
 import {globalConstants} from '../../globalConstants'
 import Logo from '../../image/logo_with_title.png'
+import {toPercent} from '../../utility/common'
 
 
 class DashboardPage extends Component{
@@ -93,7 +94,19 @@ class DashboardPage extends Component{
             pass = record.withShadowPriest ? globalConstants.G4_SHAMAN_PERCENT : globalConstants.G2_SHAMAN_PERCENT
             max = globalConstants.SHAMAN_HEALING_MAX
         }
-        return record.percent > pass ? `大于${pass*100}%,合格` : `小于${pass*100}%,不合格,扣${(Math.min(max,(pass-record.percent)/0.002)).toFixed(2)}分`
+        return record.percent > pass ? `大于${toPercent(pass)},合格` : `小于${toPercent(pass)},不合格,扣${(Math.min(max,(pass-record.percent)/0.002)).toFixed(2)}分`
+    }
+
+    calculatedRuneAverage = (runes) => {
+        let sum = runes[0]?.runeSum
+        let average = sum / this.props.healerIds.length
+        return Math.floor(average)
+    }
+
+    calculatedPotionAverage = (potions) => {
+        let sum = potions[0]?.potionSum
+        let average = sum / this.props.healerIds.length
+        return Math.floor(average)
     }
 
     generateSource = () => {
@@ -104,16 +117,18 @@ class DashboardPage extends Component{
             const emergencyNonTank = emergencyHealingNonTank?.find(i=>i.id===entry.id)?.total || 0
             const emergencyNonTankPercent = emergencyHealingNonTank?.find(i=>i.id===entry.id)?.percent || 0
             const runesCasts = runes?.find(trashEntry=>trashEntry.id===entry.id)?.runes
+            const runesAverage = runes?.find(trashEntry=>trashEntry.id===entry.id)?.runeSum/healerIds.length
             const manaPotionCasts = manaPotion?.find(trashEntry=>trashEntry.id===entry.id)?.manaPotion || 0
+            const manaPotionAverage = manaPotion?.find(trashEntry=>trashEntry.id===entry.id)?.manaPotion/healerIds.length
             const bossFF = parseFloat(bossFightDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUptime/bossFightDebuff?.totalTime*100).toFixed(2)
             const bossFFCast = bossFightDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUses
             const trashFF = parseFloat(bossTrashDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUptime/bossTrashDebuff?.totalTime*100).toFixed(2)
             const trashFFCast = bossTrashDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUses
             const lifeBloom = this.calculateLifeBloom(tankIds,druidLifeBloom)
             const [pom,pomPersecond] = this.calculatePOM(tankIds,prayOfMending, fightsSummary?.totalTime)
-            const earthShield = shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffPercent.toFixed(2) * 100
+            const earthShield = toPercent(shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffPercent,1)
             const earthShieldCast = shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffCast
-            const lightGrace = parseFloat(lightGraceBuff?.auras?.find(trashEntry=>trashEntry.id===entry.id)?.totalUptime / lightGraceBuff?.totalTime*100).toFixed(2)
+            const lightGrace = toPercent(lightGraceBuff?.auras?.find(trashEntry=>trashEntry.id===entry.id)?.totalUptime / lightGraceBuff?.totalTime, 2)
             const dispelCasts = dispels?.find(trashEntry=>trashEntry.id===entry.id)?.total
             return {
                 ...entry,
@@ -122,7 +137,9 @@ class DashboardPage extends Component{
                 emergencyNonTank,
                 emergencyNonTankPercent,
                 runesCasts,
+                runesAverage,
                 manaPotionCasts,
+                manaPotionAverage,
                 bossFF,
                 bossFFCast,
                 trashFF,
@@ -147,6 +164,8 @@ class DashboardPage extends Component{
     }
 
     render() {
+        const runeAverage = this.props.runes && this.calculatedRuneAverage(this.props.runes)
+        const potionAverage = this.props.manaPotion && this.calculatedPotionAverage(this.props.manaPotion)
         const {loading, cnWCL} = this.state
         const dataSource =  this.generateSource()
         const columns = [
@@ -205,7 +224,7 @@ class DashboardPage extends Component{
                 dataIndex: 'total',
                 sorter: (a, b) => a.total-b.total,
                 defaultSortOrder: 'descend',
-                render: (text, record)=> <span><div>{text},</div><div>{(record.percent*100).toFixed(2)}%,{this.calculatePercentScore(record)}</div></span>
+                render: (text, record)=> <span><div>{text},</div><div>{toPercent(record.percent*100, 2)}%,{this.calculatePercentScore(record)}</div></span>
             },
             {
                 title: <Tooltip title="括号中第一个值是你对坦克的治疗占你治疗的百分比，第二个值是你对坦克的治疗占坦克受到治疗的百分比。">
@@ -213,7 +232,10 @@ class DashboardPage extends Component{
                 </Tooltip>,
                 dataIndex: 'healingToTank',
                 sorter: (a, b) => a.healingToTank-b.healingToTank,
-                render: (text, record)=> <span><div>{text},</div><div>{record.healingToTankPercent}%,{record.tankHealingReceivedPercent}%</div></span>
+                render: (text, record)=> <span><div>{text},</div>
+                    <div>{toPercent(record.healingToTankPercent,1)} {record.type==='Paladin' && (globalConstants.TANK_HEALING_PERCENT_CAP-record.healingToTankPercent>0 ?  `${(5 - (globalConstants.TANK_HEALING_PERCENT_CAP - record.healingToTankPercent) /0.02).toFixed(2)}分`: '5分')},
+                        {toPercent(record.tankHealingReceivedPercent,1)} {record.type==='Paladin' && (globalConstants.TANK_RECEIVED_PERCENT_CAP-record.tankHealingReceivedPercent>0 ?  `${(5 - (globalConstants.TANK_RECEIVED_PERCENT_CAP - record.tankHealingReceivedPercent) /0.004).toFixed(2)}分`: '5分')}</div>
+                </span>
             },
             {
                 title: <Tooltip title="对坦克血在50%以下时的直接治疗量">
@@ -221,7 +243,7 @@ class DashboardPage extends Component{
                 </Tooltip>,
                 dataIndex: 'emergency',
                 sorter: (a, b) => a.emergency-b.emergency,
-                render: (text, record)=> `${text}(${record.emergencyPercent}%)`
+                render: (text, record)=> `${text}(${(record.emergencyPercent*100).toFixed(1)}%) ${record.type==='Paladin' ? (globalConstants.TANK_EMERGENCY_CAP-record.emergencyPercent>0 ?  `${(10 - (globalConstants.TANK_EMERGENCY_CAP - record.emergencyPercent) /0.02).toFixed(2)}分`: '10分'):''} `
             },
             {
                 title: <Tooltip title="对非坦克目标血在50%以下时的直接治疗量">
@@ -229,17 +251,19 @@ class DashboardPage extends Component{
                 </Tooltip>,
                 dataIndex: 'emergencyNonTank',
                 sorter: (a, b) => a.emergencyNonTank-b.emergencyNonTank,
-                render: (text, record)=> `${text}(${record.emergencyNonTankPercent}%)`
+                render: (text, record)=> `${text}(${(record.emergencyNonTankPercent*100).toFixed(1)}%)`
             },
             {
-                title: '大蓝',
+                title: <Tooltip title={`平均数为: ${potionAverage}`}>
+                    <span>大蓝<QuestionCircleOutlined /></span>
+                </Tooltip>,
                 dataIndex: 'manaPotionCasts',
-                sorter: (a, b) => a.manaPotionCasts-b.manaPotionCasts,
             },
             {
-                title: '符文',
+                title: <Tooltip title={`平均数为: ${runeAverage}`}>
+                    <span>符文<QuestionCircleOutlined /></span>
+                </Tooltip>,
                 dataIndex: 'runesCasts',
-                sorter: (a, b) => a.runesCasts-b.runesCasts,
             },
             {
                 title: '驱散',
@@ -293,12 +317,7 @@ class DashboardPage extends Component{
                     {
                         title: '圣光之赐覆盖',
                         dataIndex: 'lightGrace',
-                        render: (text, record)=> record.type === 'Paladin' && `${text}%`
-                    },
-                    {
-                        title: '坦克治疗(占比)',
-                        dataIndex: 'healingToTank',
-                        render: (text, record)=> record.type === 'Paladin' && `${text}(${record.healingToTankPercent}%)`
+                        render: (text, record)=> record.type === 'Paladin' && `${text}`
                     },
                 ]
             },

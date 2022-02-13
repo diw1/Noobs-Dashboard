@@ -94,7 +94,7 @@ class DashboardPage extends Component{
             pass = record.withShadowPriest ? globalConstants.G4_SHAMAN_PERCENT : globalConstants.G2_SHAMAN_PERCENT
             max = globalConstants.SHAMAN_HEALING_MAX
         }
-        return record.percent > pass ? `大于${toPercent(pass)},合格` : `小于${toPercent(pass)},不合格,扣${(Math.min(max,(pass-record.percent)/0.002)).toFixed(2)}分`
+        return record.percent > pass ? `大于${toPercent(pass,1)},合格` : `小于${toPercent(pass,1)},不合格,扣${(Math.min(max,(pass-record.percent)/0.002)).toFixed(1)}分`
     }
 
     calculatedRuneAverage = (runes) => {
@@ -224,7 +224,7 @@ class DashboardPage extends Component{
                 dataIndex: 'total',
                 sorter: (a, b) => a.total-b.total,
                 defaultSortOrder: 'descend',
-                render: (text, record)=> <span><div>{text},</div><div>{toPercent(record.percent*100, 2)}%,{this.calculatePercentScore(record)}</div></span>
+                render: (text, record)=> <span><div>{text},</div><div>{toPercent(record.percent, 2)},{this.calculatePercentScore(record)}</div></span>
             },
             {
                 title: <Tooltip title="括号中第一个值是你对坦克的治疗占你治疗的百分比，第二个值是你对坦克的治疗占坦克受到治疗的百分比。">
@@ -233,8 +233,8 @@ class DashboardPage extends Component{
                 dataIndex: 'healingToTank',
                 sorter: (a, b) => a.healingToTank-b.healingToTank,
                 render: (text, record)=> <span><div>{text},</div>
-                    <div>{toPercent(record.healingToTankPercent,1)} {record.type==='Paladin' && (globalConstants.TANK_HEALING_PERCENT_CAP-record.healingToTankPercent>0 ?  `${(5 - (globalConstants.TANK_HEALING_PERCENT_CAP - record.healingToTankPercent) /0.02).toFixed(2)}分`: '5分')},
-                        {toPercent(record.tankHealingReceivedPercent,1)} {record.type==='Paladin' && (globalConstants.TANK_RECEIVED_PERCENT_CAP-record.tankHealingReceivedPercent>0 ?  `${(5 - (globalConstants.TANK_RECEIVED_PERCENT_CAP - record.tankHealingReceivedPercent) /0.004).toFixed(2)}分`: '5分')}</div>
+                    <div>{toPercent(record.healingToTankPercent,1)} {record.type==='Paladin' && (globalConstants.TANK_HEALING_PERCENT_CAP-record.healingToTankPercent>0 ?  `${Math.max(0,(5 - (globalConstants.TANK_HEALING_PERCENT_CAP - record.healingToTankPercent) /0.02)).toFixed(2)}分`: '5分')},
+                        {toPercent(record.tankHealingReceivedPercent,1)} {record.type==='Paladin' && (globalConstants.TANK_RECEIVED_PERCENT_CAP-record.tankHealingReceivedPercent>0 ?  `${Math.max(0,(5 - (globalConstants.TANK_RECEIVED_PERCENT_CAP - record.tankHealingReceivedPercent) /0.004)).toFixed(2)}分`: '5分')}</div>
                 </span>
             },
             {
@@ -243,7 +243,7 @@ class DashboardPage extends Component{
                 </Tooltip>,
                 dataIndex: 'emergency',
                 sorter: (a, b) => a.emergency-b.emergency,
-                render: (text, record)=> `${text}(${(record.emergencyPercent*100).toFixed(1)}%) ${record.type==='Paladin' ? (globalConstants.TANK_EMERGENCY_CAP-record.emergencyPercent>0 ?  `${(10 - (globalConstants.TANK_EMERGENCY_CAP - record.emergencyPercent) /0.02).toFixed(2)}分`: '10分'):''} `
+                render: (text, record)=> `${text}(${(record.emergencyPercent*100).toFixed(1)}%) ${record.type==='Paladin' ? (globalConstants.TANK_EMERGENCY_CAP-record.emergencyPercent>0 ?  `${Math.max(0,10 - (globalConstants.TANK_EMERGENCY_CAP - record.emergencyPercent) /0.02).toFixed(2)}分`: '10分'):''} `
             },
             {
                 title: <Tooltip title="对非坦克目标血在50%以下时的直接治疗量">
@@ -300,7 +300,7 @@ class DashboardPage extends Component{
                     {
                         title: '大地盾覆盖(施法)(5分)',
                         dataIndex: 'earthShield',
-                        render: (text, record)=> record.type === 'Shaman' && `${text}%(${record.earthShieldCast}),${(Number.parseFloat(text)>70? 5 : Number.parseFloat(text)<40 ? 0 : (Number.parseFloat(text)-40)/6).toFixed(2)}分`
+                        render: (text, record)=> record.type === 'Shaman' && `${text}(${record.earthShieldCast}),${(Number.parseFloat(text)>70? 5 : Number.parseFloat(text)<40 ? 0 : (Number.parseFloat(text)-40)/6).toFixed(2)}分`
                     },
                     {
                         title: <Tooltip title="包括灵感在内">

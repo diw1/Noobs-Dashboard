@@ -172,6 +172,26 @@ export default {
             })
         },
 
+        // async getShamanTotem(reportId){
+        //     const healing = actions.report.getS().report.healing
+        //     const shamans = healing?.filter(player=>player.type==='Shaman')
+        //     let sum = shamans?.map(async (priest) => {
+        //
+        //         const castResult = await service.getTables(reportId,'casts', {
+        //             abilityid: globalConstants.SHIELD_ID,
+        //             sourceid: priest.id
+        //         })
+        //         const shieldCast = castResult.data?.entries?.reduce((acc,item)=>acc+item.total,0)
+        //         const shieldCastPerMinute = shieldCast/fightTimeMinute
+        //         return {...priest, shieldCast, shieldCastPerMinute}
+        //     })
+        //     Promise.all(sum).then(records=>{
+        //         const healing = actions.report.getS().report.healing.map(player=>({...player, ...records.find(record=>record.id === player.id)}))
+        //         actions.report.save({healing})
+        //     })
+        // },
+
+
         async checkG4Shaman(reportId){
             const shamans = actions.report.getS().report.healing?.filter(player=>player.type==='Shaman')
             let sum = shamans?.map(async (shaman) => {

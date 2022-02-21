@@ -295,10 +295,11 @@ export default {
         },
 
         async getL5Arcane(reportId){
-            const bossResult = await service.getTables(reportId,'damage-taken', {abilityid:globalConstants.L5_ARCANE_ID})
+            const bossResult = await service.getEvents(reportId,'damage-taken', {abilityid:globalConstants.L5_ARCANE_ID})
             actions.report.save({
-                missed_l5_arcane: bossResult.data?.entries?.reduce((accu,item)=>{
-                    accu += item?.hitdetails[0]?.absorbOrOverheal === 0 ? 1: 0
+                missed_l5_arcane: bossResult.data?.events?.reduce((accu,item)=>{
+
+                    accu += item?.absorbed > 0 ? 0: 1
                     return accu
                 },0),
             })

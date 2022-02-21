@@ -1,10 +1,11 @@
-import {Component} from 'react'
+import {Component, Fragment} from 'react'
 import {Button, Input, Table, Card, Col, Row, Switch, Tooltip} from 'antd'
 import {actions, connect} from 'mirrorx'
 import {QuestionCircleOutlined} from '@ant-design/icons'
 import {globalConstants} from '../../globalConstants'
 import Logo from '../../image/logo_with_title.png'
 import {toPercent} from '../../utility/common'
+import {WelcomeBanner} from '../Layout/Banner'
 
 
 class DashboardPage extends Component{
@@ -358,39 +359,42 @@ class DashboardPage extends Component{
             },
         ]
         return (
-            <Card title={<Row type="flex" gutter={16} align="middle">
-                <img src={Logo} width={100}/>
-                <Col>
-                    <Switch
-                        checked={cnWCL}
-                        onChange={this.handleLocaleChange}
-                        checkedChildren="国服"
-                        unCheckedChildren="外服"
+            <Fragment>
+                <WelcomeBanner />
+
+                <Card title={<Row type="flex" gutter={16} align="middle">
+                    <img src={Logo} width={100}/>
+                    <Col>
+                        <Switch
+                            checked={cnWCL}
+                            onChange={this.handleLocaleChange}
+                            checkedChildren="国服"
+                            unCheckedChildren="外服"
+                        />
+                    </Col>
+                    <Col>
+                        <Input
+                            style={{width: 400}}
+                            placeholder="请粘贴reportID，例如: Jzx9tgnTKvVwAX"
+                            onChange={event => this.setState({report: event.target.value})}/>
+                    </Col>
+                    <Col>
+                        <Button disabled={!this.state.report} onClick={this.submit}>提交</Button>
+                    </Col>
+                </Row>}>
+
+                    <Table
+                        rowClassName={record => record.type}
+                        size="small"
+                        loading={loading}
+                        dataSource={dataSource}
+                        columns={columns}
+                        rowKey='id'
+                        pagination={false}
+                        scroll={{x:true}}
                     />
-                </Col>
-                <Col>
-                    <Input
-                        style={{width: 400}}
-                        placeholder="请粘贴reportID，例如: Jzx9tgnTKvVwAX"
-                        onChange={event => this.setState({report: event.target.value})}/>
-                </Col>
-                <Col>
-                    <Button disabled={!this.state.report} onClick={this.submit}>提交</Button>
-                </Col>
-            </Row>}>
-
-                <Table
-                    rowClassName={record => record.type}
-                    size="small"
-                    loading={loading}
-                    dataSource={dataSource}
-                    columns={columns}
-                    rowKey='id'
-                    pagination={false}
-                    scroll={{x:true}}
-                />
-
-            </Card>
+                </Card>
+            </Fragment>
         )
     }
 }

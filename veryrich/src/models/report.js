@@ -175,11 +175,11 @@ export default {
         // async getShamanTotem(reportId){
         //     const healing = actions.report.getS().report.healing
         //     const shamans = healing?.filter(player=>player.type==='Shaman')
-        //     let sum = shamans?.map(async (priest) => {
+        //     let sum = shamans?.map(async (shaman) => {
         //
         //         const castResult = await service.getTables(reportId,'casts', {
         //             abilityid: globalConstants.SHIELD_ID,
-        //             sourceid: priest.id
+        //             sourceid: shaman.id
         //         })
         //         const shieldCast = castResult.data?.entries?.reduce((acc,item)=>acc+item.total,0)
         //         const shieldCastPerMinute = shieldCast/fightTimeMinute

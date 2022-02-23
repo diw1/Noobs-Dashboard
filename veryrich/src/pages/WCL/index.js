@@ -234,8 +234,8 @@ class DashboardPage extends Component{
                 dataIndex: 'healingToTank',
                 sorter: (a, b) => a.healingToTank-b.healingToTank,
                 render: (text, record)=> <span><div>{text},</div>
-                    <div>{toPercent(record.healingToTankPercent,1)} {record.type==='Paladin' && (globalConstants.TANK_HEALING_PERCENT_CAP-record.healingToTankPercent>0 ?  `${Math.max(0,(5 - (globalConstants.TANK_HEALING_PERCENT_CAP - record.healingToTankPercent) /0.02)).toFixed(2)}分`: '5分')},
-                        {toPercent(record.tankHealingReceivedPercent,1)} {record.type==='Paladin' && (globalConstants.TANK_RECEIVED_PERCENT_CAP-record.tankHealingReceivedPercent>0 ?  `${Math.max(0,(5 - (globalConstants.TANK_RECEIVED_PERCENT_CAP - record.tankHealingReceivedPercent) /0.004)).toFixed(2)}分`: '5分')}</div>
+                    <div>{toPercent(record.healingToTankPercent,1)} {(record.type==='Paladin' || record.type==='Priest') && (globalConstants.TANK_HEALING_PERCENT_CAP-record.healingToTankPercent>0 ?  `${Math.max(0,(5 - (globalConstants.TANK_HEALING_PERCENT_CAP - record.healingToTankPercent) /0.02)).toFixed(2)}分`: '5分')},
+                        {toPercent(record.tankHealingReceivedPercent,1)} {(record.type==='Paladin' || record.type==='Priest') && (globalConstants.TANK_RECEIVED_PERCENT_CAP-record.tankHealingReceivedPercent>0 ?  `${Math.max(0,(5 - (globalConstants.TANK_RECEIVED_PERCENT_CAP - record.tankHealingReceivedPercent) /0.004)).toFixed(2)}分`: '5分')}</div>
                 </span>
             },
             {
@@ -290,7 +290,7 @@ class DashboardPage extends Component{
                         },{
                             title: '全程(覆盖和施法各5)',
                             dataIndex: 'trashFF',
-                            render: (text, record)=> record.type === 'Druid' && `${text}%,${(Number.parseFloat(text)/20).toFixed(2)}分(${record.trashFFCast}次,${Math.min(5,(record.trashFFCast/50)).toFixed(2)}分)`
+                            render: (text, record)=> record.type === 'Druid' && `${text}%,${(Number.parseFloat(text)/20).toFixed(2)}分(${record.trashFFCast}次,${Math.min(5,(record.trashFFCast/globalConstants.FF_TRASH_COEFFICIENT)).toFixed(2)}分)`
                         },]
                     },
                 ]
@@ -337,7 +337,7 @@ class DashboardPage extends Component{
                         </Tooltip>,
                         dataIndex: 'pom',
                         render: (text, record)=> record.type === 'Priest' && `${text}(${record.pomPersecond.toFixed(1)})${globalConstants.POM_HPS_CAP-record.pomPersecond>0 ?
-                            `${(5-(globalConstants.POM_HPS_CAP-record.pomPersecond)/3).toFixed(2)}分`: '5分'} `
+                            `${Math.max(0,(5-(globalConstants.POM_HPS_CAP-record.pomPersecond)/globalConstants.POM_COEFFICIENT)).toFixed(2)}分`: '5分'} `
                     },
                     {
                         title: <Tooltip title="BOSS战所有坦克恢复buff覆盖率的总和">
@@ -345,7 +345,7 @@ class DashboardPage extends Component{
                         </Tooltip>,
                         dataIndex: 'renewOnTank',
                         render: (text, record)=> record.type === 'Priest' && `${(text*100).toFixed(1)}%(${globalConstants.RENEW_CAP-text>0 ?
-                            `${(5-(globalConstants.RENEW_CAP-text)/0.02).toFixed(2)}分`: '5分'}) `
+                            `${Math.max(0,(5-(globalConstants.RENEW_CAP-text)/0.04)).toFixed(2)}分`: '5分'}) `
                     },
                     {
                         title: <Tooltip title="每分钟套盾次数">
@@ -353,7 +353,7 @@ class DashboardPage extends Component{
                         </Tooltip>,
                         dataIndex: 'shieldCast',
                         render: (text, record)=> record.type === 'Priest' && `${text}(${record.shieldCastPerMinute?.toFixed(2)})${globalConstants.SHIELD_MINUTE_CAP-record.shieldCastPerMinute>0 ? 
-                            `${(5-(globalConstants.SHIELD_MINUTE_CAP-record.shieldCastPerMinute)*10).toFixed(2)}分`: '5分'} `
+                            `${Math.max(0,(5-(globalConstants.SHIELD_MINUTE_CAP-record.shieldCastPerMinute)/0.15)).toFixed(2)}分`: '5分'} `
                     },
                 ]
             },

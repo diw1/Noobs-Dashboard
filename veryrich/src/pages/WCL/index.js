@@ -95,7 +95,7 @@ class DashboardPage extends Component{
             pass = record.withShadowPriest ? globalConstants.G4_SHAMAN_PERCENT : globalConstants.G2_SHAMAN_PERCENT
             max = globalConstants.SHAMAN_HEALING_MAX
         }
-        return record.percent > pass ? `大于${toPercent(pass,1)},合格` : `小于${toPercent(pass,1)},不合格,扣${(Math.min(max,(pass-record.percent)/0.002)).toFixed(1)}分`
+        return record.percent > pass ? `大于${toPercent(pass,1)},${max}分` : `小于${toPercent(pass,1)},不合格,${(Math.max(0,max-(pass-record.percent)/0.002)).toFixed(1)}分`
     }
 
     calculatedRuneAverage = (runes) => {
@@ -234,8 +234,8 @@ class DashboardPage extends Component{
                 dataIndex: 'healingToTank',
                 sorter: (a, b) => a.healingToTank-b.healingToTank,
                 render: (text, record)=> <span><div>{text},</div>
-                    <div>{toPercent(record.healingToTankPercent,1)} {(record.type==='Paladin' || record.type==='Priest') && (globalConstants.TANK_HEALING_PERCENT_CAP-record.healingToTankPercent>0 ?  `${Math.max(0,(5 - (globalConstants.TANK_HEALING_PERCENT_CAP - record.healingToTankPercent) /0.02)).toFixed(2)}分`: '5分')},
-                        {toPercent(record.tankHealingReceivedPercent,1)} {(record.type==='Paladin' || record.type==='Priest') && (globalConstants.TANK_RECEIVED_PERCENT_CAP-record.tankHealingReceivedPercent>0 ?  `${Math.max(0,(5 - (globalConstants.TANK_RECEIVED_PERCENT_CAP - record.tankHealingReceivedPercent) /0.004)).toFixed(2)}分`: '5分')}</div>
+                    <div>{toPercent(record.healingToTankPercent,1)} {record.type==='Paladin' && (globalConstants.TANK_HEALING_PERCENT_CAP-record.healingToTankPercent>0 ?  `${Math.max(0,(5 - (globalConstants.TANK_HEALING_PERCENT_CAP - record.healingToTankPercent) /0.02)).toFixed(2)}分`: '5分')},
+                        {toPercent(record.tankHealingReceivedPercent,1)} {(record.type==='Paladin' || record.type==='Priest') && (globalConstants.TANK_RECEIVED_PERCENT_CAP-record.tankHealingReceivedPercent>0 ?  `${Math.max(0,(5 - (globalConstants[`TANK_RECEIVED_PERCENT_CAP_${record.type.toUpperCase()}`] - record.tankHealingReceivedPercent) /0.004)).toFixed(2)}分`: '5分')}</div>
                 </span>
             },
             {
@@ -252,7 +252,7 @@ class DashboardPage extends Component{
                 </Tooltip>,
                 dataIndex: 'emergencyNonTank',
                 sorter: (a, b) => a.emergencyNonTank-b.emergencyNonTank,
-                render: (text, record)=> `${text}(${(record.emergencyNonTankPercent*100).toFixed(1)}%)`
+                render: (text, record)=> `${text}(${(record.emergencyNonTankPercent*100).toFixed(1)}%)${record.type==='Druid' ? (globalConstants.RAID_EMERGENCY_CAP_DRUID-record.emergencyNonTankPercent>0 ?  `${Math.max(0,globalConstants.RAID_EMERGENCY_MAX_DRUID - (globalConstants.RAID_EMERGENCY_CAP_DRUID - record.emergencyNonTankPercent) /0.02).toFixed(2)}分`: `${globalConstants.RAID_EMERGENCY_MAX_DRUID}分`):''} `
             },
             {
                 title: <Tooltip title={`平均数为: ${potionAverage}`}>
@@ -276,10 +276,10 @@ class DashboardPage extends Component{
                 children: [
                     {
                         title: <Tooltip title="坦克的绽放平均hot值（包含过量）*buff覆盖率的总和">
-                            <span>坦克三花(10分)<QuestionCircleOutlined /></span>
+                            <span>坦克三花(7.5分)<QuestionCircleOutlined /></span>
                         </Tooltip>,
                         dataIndex: 'lifeBloom',
-                        render: (text, record)=> record.type === 'Druid' && `${text}(${record.lifeBloom>globalConstants.LIFEBLOOM_MAX?10 : (record.lifeBloom/globalConstants.LIFEBLOOM_COEFFICIENT).toFixed(2)}分)`
+                        render: (text, record)=> record.type === 'Druid' && `${text}(${record.lifeBloom>globalConstants.LIFEBLOOM_MAX?7.5 : (record.lifeBloom/globalConstants.LIFEBLOOM_COEFFICIENT).toFixed(2)}分)`
                     },
                     {
                         title: '精灵火覆盖率(施法)',
@@ -290,7 +290,7 @@ class DashboardPage extends Component{
                         },{
                             title: '全程(覆盖和施法各5)',
                             dataIndex: 'trashFF',
-                            render: (text, record)=> record.type === 'Druid' && `${text}%,${(Number.parseFloat(text)/20).toFixed(2)}分(${record.trashFFCast}次,${Math.min(5,(record.trashFFCast/globalConstants.FF_TRASH_COEFFICIENT)).toFixed(2)}分)`
+                            render: (text, record)=> record.type === 'Druid' && `${text}%,${Math.min(5,Number.parseFloat(text)/16).toFixed(2)}分(${record.trashFFCast}次,${Math.min(5,(record.trashFFCast/globalConstants.FF_TRASH_COEFFICIENT)).toFixed(2)}分)`
                         },]
                     },
                 ]

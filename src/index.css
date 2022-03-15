@@ -1,0 +1,119 @@
+@import '~antd/dist/antd.css';
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.Hunter{
+  background: #AAD372;
+  color: white;
+}
+
+.Priest{
+  background: #F0EBE0;
+  color: black;
+}
+
+.Druid{
+  background: #FF7C0A;
+  color: white;
+}
+
+.Rogue{
+  background: #FFD268;
+  color: black;
+}
+
+.Mage{
+  background: #68CCEF;
+  color: white;
+}
+
+.Warlock{
+  background: #9382C9;
+  color: white;
+}
+
+.Warrior{
+  background: #C69B6D;
+  color: white;
+}
+
+.Paladin{
+  background: #F48CBA;
+  color: white;
+}
+.Shaman{
+  background: #3B68F2;
+  color: white;
+}
+
+.wcl_table td.ant-table-column-sort {
+    background: inherit;
+}
+
+.ant-table-tbody > tr.ant-table-row:hover > td{
+  background: unset;
+}
+
+.ant-pro-sider-logo img{
+  height: 80px;
+}
+
+.wcl_table .ant-table-cell-fix-left{
+  background: unset;
+}
+
+.dashboard_alert {
+  width: -moz-available;
+  /* WebKit-based browsers will ignore this. */
+  width: -webkit-fill-available;
+  /* Mozilla-based browsers will ignore this. */
+}
+.dashboard_alert .alerts {
+  padding: 10px;
+  margin: 0;
+  color: white;
+  font-weight: 500;
+}
+.dashboard_alert .alerts .icon {
+  font-size: 36px;
+}
+.dashboard_alert .alerts .title {
+  font-weight: 700;
+  font-size: 20px;
+}
+.dashboard_alert .alerts button {
+  color: white;
+  margin-top: 6px;
+}
+.dashboard_alert .alerts .alert_title span {
+  position: relative;
+  top: 6px;
+  padding-right: 15px;
+}
+.dashboard_alert .alerts .alert_title a {
+  line-height: 40px;
+  font-size: 17px;
+  color: white;
+  text-decoration: none;
+}
+.dashboard_alert .alerts .alert_title a:hover {
+  text-decoration: none;
+}
+.dashboard_alert .alerts label {
+  margin: 0;
+}
+.dashboard_alert .normal_alert {
+  background: #1b3163;
+}

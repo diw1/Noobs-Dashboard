@@ -3,7 +3,7 @@ import {actions, connect, Link} from 'mirrorx'
 import ProTable from '@ant-design/pro-table'
 import {Fragment, useEffect, useState} from 'react'
 import {globalConstants} from '../../globalConstants'
-import {Space, Select, Radio, Card, Badge} from 'antd'
+import {Space, Select, Radio, Badge} from 'antd'
 import {ClassColorText} from '../../utility/common'
 
 const mapStateToProps = state => ({
@@ -13,7 +13,7 @@ const mapStateToProps = state => ({
 })
 
 const checkAttendance = (status) => {
-    return !status?.includes('请假') && !status?.includes('未满足')
+    return status?.includes('请假') || status?.includes('未满足')
 }
 
 const attendanceTable = (cdres, attendance) =>{
@@ -33,7 +33,7 @@ const attendanceTable = (cdres, attendance) =>{
             status={globalConstants.ATTENDANCE_STATUS[text]?.status}
             text={text}
         />
-    }))).concat([{
+    })).reverse()).concat([{
         title: '应到',
         dataIndex: 'sum',
         width: 60,
@@ -86,7 +86,7 @@ const scoreTable = (raidres, score) =>{
         title: raid.name,
         dataIndex: raid.name,
         width: 80,
-    }))).concat([{
+    })).reverse()).concat([{
         title: '场次',
         dataIndex: 'count',
         width: 60,
@@ -174,7 +174,7 @@ const RolePage = (props) => {
         result = data!=='' && data?.map(record=>{
             let attend = record.attend?.reduce((acc,item)=>Object.assign(acc,item),{})
             attend.sum = record.attend?.length
-            attend.miss = record.attend?.reduce((acc,item)=>acc + checkAttendance(Object.values(item)[0]) ? 0 : 1 ,0)
+            attend.miss = record.attend?.reduce((acc,item)=> acc + (checkAttendance(Object.values(item)[0]) ? 1 : 0),0)
             attend.attends = attend.sum - attend.miss
             attend.rate = record.attend?.length===0 ? 0 :
                 (attend.attends/attend.sum)

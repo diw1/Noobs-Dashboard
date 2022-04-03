@@ -136,6 +136,7 @@ class DashboardPage extends Component{
             const earthShieldCast = shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffCast
             const lightGrace = toPercent(lightGraceBuff?.auras?.find(trashEntry=>trashEntry.id===entry.id)?.totalUptime / lightGraceBuff?.totalTime, 2)
             const dispelCasts = dispels?.find(trashEntry=>trashEntry.id===entry.id)?.total
+            console.log(entry?.specs)
             return {
                 ...entry,
                 emergency,
@@ -234,7 +235,7 @@ class DashboardPage extends Component{
                 render: (text, record)=> <span><div>{text},</div><div>{toPercent(record.percent, 2)},{this.calculatePercentScore(record)}</div></span>
             },
             {
-                title: <Tooltip title="括号中第一个值是你对坦克的治疗占你治疗的百分比，第二个值是你对坦克的治疗占坦克受到治疗的百分比。">
+                title: <Tooltip title="括号中第一个值是你对坦克的治疗占你治疗的百分比（奶骑会在分母减去对团血的救急治疗），第二个值是你对坦克的治疗占坦克受到治疗的百分比。">
                     <span>坦克治疗量<QuestionCircleOutlined /></span>
                 </Tooltip>,
                 dataIndex: 'healingToTank',
@@ -342,24 +343,24 @@ class DashboardPage extends Component{
                             <span>坦克愈合(5分)<QuestionCircleOutlined /></span>
                         </Tooltip>,
                         dataIndex: 'pom',
-                        render: (text, record)=> record.type === 'Priest' && `${text}(${record.pomPersecond.toFixed(1)})${globalConstants[`POM_HPS_CAP${is3Shaman?'_3SHAMANS':''}`]-record.pomPersecond>0 ?
-                            `${Math.max(0,(5-(globalConstants[`POM_HPS_CAP${is3Shaman?'_3SHAMANS':''}`]-record.pomPersecond)/globalConstants.POM_COEFFICIENT)).toFixed(2)}分`: '5分'} `
+                        render: (text, record)=> record.type === 'Priest' && `${text}(${record.pomPersecond.toFixed(1)})${globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}POM_HPS_CAP${is3Shaman?'_3SHAMANS':''}`]-record.pomPersecond>0 ?
+                            `${Math.max(0,(5-(globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}POM_HPS_CAP${is3Shaman?'_3SHAMANS':''}`]-record.pomPersecond)/globalConstants.POM_COEFFICIENT)).toFixed(2)}分`: '5分'} `
                     },
                     {
                         title: <Tooltip title="BOSS战所有坦克恢复buff覆盖率的总和">
                             <span>坦克恢复(5分)<QuestionCircleOutlined /></span>
                         </Tooltip>,
                         dataIndex: 'renewOnTank',
-                        render: (text, record)=> record.type === 'Priest' && `${(text*100).toFixed(1)}%(${globalConstants[`RENEW_CAP${is3Shaman?'_3SHAMANS':''}`]-text>0 ?
-                            `${Math.max(0,(5-(globalConstants[`RENEW_CAP${is3Shaman?'_3SHAMANS':''}`]-text)/0.04)).toFixed(2)}分`: '5分'}) `
+                        render: (text, record)=> record.type === 'Priest' && `${(text*100).toFixed(1)}%(${globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}RENEW_CAP${is3Shaman?'_3SHAMANS':''}`]-text>0 ?
+                            `${Math.max(0,(5-(globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}RENEW_CAP${is3Shaman?'_3SHAMANS':''}`]-text)/0.04)).toFixed(2)}分`: '5分'}) `
                     },
                     {
                         title: <Tooltip title="每分钟套盾次数">
                             <span>套盾次数(5分)<QuestionCircleOutlined /></span>
                         </Tooltip>,
                         dataIndex: 'shieldCast',
-                        render: (text, record)=> record.type === 'Priest' && `${text}(${record.shieldCastPerMinute?.toFixed(2)})${globalConstants[`SHIELD_MINUTE_CAP${is3Shaman?'_3SHAMANS':''}`]-record.shieldCastPerMinute>0 ? 
-                            `${Math.max(0,(5-(globalConstants[`SHIELD_MINUTE_CAP${is3Shaman?'_3SHAMANS':''}`]-record.shieldCastPerMinute)/0.15)).toFixed(2)}分`: '5分'} `
+                        render: (text, record)=> record.type === 'Priest' && `${text}(${record.shieldCastPerMinute?.toFixed(2)})${globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}SHIELD_MINUTE_CAP${is3Shaman?'_3SHAMANS':''}`]-record.shieldCastPerMinute>0 ? 
+                            `${Math.max(0,(5-(globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}SHIELD_MINUTE_CAP${is3Shaman?'_3SHAMANS':''}`]-record.shieldCastPerMinute)/0.15)).toFixed(2)}分`: '5分'} `
                     },
                 ]
             },

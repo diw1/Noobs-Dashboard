@@ -80,7 +80,7 @@ export default {
 
         async getHealing(reportId){
             const result = await service.getTables(reportId,'healing')
-            const damageDone = actions.report.getS().report.fightsSummary?.damageDone
+            const {damageDone, playerDetails} = actions.report.getS().report.fightsSummary
             const healIds = actions.report.getS().report.healerIds
             const healerDamageDone = damageDone.filter(item=>healIds.includes(item.id)).reduce((acc,item)=>acc+item.total,0)
             let totalHealing = result.data?.entries?.reduce((acc,item)=>acc+item.total,0)
@@ -89,6 +89,7 @@ export default {
                     ...player,
                     damage: damageDone?.find(record=>record.id===player.id)?.total,
                     percent: (player.total+damageDone?.find(record=>record.id===player.id)?.total)/(totalHealing+healerDamageDone),
+                    specs: playerDetails.healers?.find(record=>record.id===player.id)?.specs,
                 }))
             })
         },
@@ -221,8 +222,8 @@ export default {
         },
 
         async checkHealingToTank(reportId){
-            const tankIds = actions.report.getS().report.tankIds
-            const healerIds = actions.report.getS().report.healerIds
+            const {tankIds,healerIds, emergencyHealingNonTank} = actions.report.getS().report
+
             let healerRes = healerIds.reduce((acc,curr)=> (acc[curr]=0 ,acc),{})
             let totalTanksHealing = 0
             let sum = tankIds?.map(async (tank) => {
@@ -240,7 +241,7 @@ export default {
             Promise.all(sum).then(records=>{
                 const healing = actions.report.getS().report.healing.map(player=>({...player,
                     healingToTank: healerRes[player.id],
-                    healingToTankPercent: healerRes[player.id]/player.total,
+                    healingToTankPercent: healerRes[player.id]/(player.total-(player.type==='Paladin' ? emergencyHealingNonTank.find(emer=>emer.id===player.id)?.total:0)),
                     tankHealingReceivedPercent: healerRes[player.id]/totalTanksHealing
                 }))
                 actions.report.save({healing})

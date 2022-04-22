@@ -11,6 +11,7 @@ const PlayersPage = lazy(()=> import( './pages/Players'))
 const PlayerPage = lazy(()=> import( './pages/Players/player'))
 const RaidsPage = lazy(()=> import( './pages/Raids'))
 const WCLPage = lazy(()=> import( './pages/WCL'))
+const SinStonePage = lazy(()=> import( './pages/SinStone'))
 import ('@ant-design/pro-table/dist/table.css')
 const RaidPage = lazy(()=> import( './pages/Raids/raid'))
 const RolePage = lazy(()=> import( './pages/Role'))
@@ -28,6 +29,7 @@ render(
                 <Redirect exact from='/' to='/players'/>
                 <Redirect exact from='/Noobs-Dashboard' to='/players'/>
                 <Route path='/wcl' component={WCLPage}/>
+                <Route path='/sinstone' component={SinStonePage}/>
                 <Route path='/players' component={PlayersPage}/>
                 <Route exact path='/player/:playerId' component={PlayerPage}/>
                 <Route exact path='/raids' component={RaidsPage}/>

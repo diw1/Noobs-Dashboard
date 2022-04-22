@@ -98,5 +98,8 @@ export const globalConstants = {
         '休息': {status:'processing'},
         '请假': {status:'error'},
         '未满足出战条件': {status:'warning'},
-    }
+    },
+
+    // Sin stone
+    SIN_STONE_BASE_URL: 'http://124.223.17.133:8080/sinstone'
 }

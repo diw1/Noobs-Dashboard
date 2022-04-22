@@ -82,8 +82,12 @@ function getWCLData(url) {
     return callWCLAPI('GET', url, null, null)
 }
 
+function postSinStoneData(url, payload, header, method) {
+    return callWCLAPI(method, url, header, payload)
+}
+
 function saveData(url, payload, method) {
     return callAPI(method, url, null, payload)
 }
 
-export { getData, saveData, getWCLData }
+export { getData, saveData, getWCLData, postSinStoneData }

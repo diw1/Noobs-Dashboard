@@ -136,7 +136,6 @@ class DashboardPage extends Component{
             const earthShieldCast = shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffCast
             const lightGrace = toPercent(lightGraceBuff?.auras?.find(trashEntry=>trashEntry.id===entry.id)?.totalUptime / lightGraceBuff?.totalTime, 2)
             const dispelCasts = dispels?.find(trashEntry=>trashEntry.id===entry.id)?.total
-            console.log(entry?.specs)
             return {
                 ...entry,
                 emergency,

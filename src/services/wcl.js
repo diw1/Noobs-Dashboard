@@ -3,7 +3,7 @@ import {globalConstants} from '../globalConstants'
 import queryString from 'query-string'
 
 function getTables (reportID, table, params) {
-    const url = `${globalConstants.WCL_API_BASE_URL}report/tables/${table}/${reportID}?api_key=${globalConstants.API_KEY}&wipes=2&end=${globalConstants.ENDTIME}&${queryString.stringify(params)}`
+    const url = `${globalConstants.WCL_API_BASE_URL}report/tables/${table}/${reportID}?api_key=${globalConstants.API_KEY}&wipes=2&end=${globalConstants.ENDTIME}&${queryString.stringify(params)}&filter=encounterid%20%21%3D%20724`
     return getWCLData(url)
 }
 
@@ -13,12 +13,12 @@ function getEvents (reportID, table, params) {
 }
 
 function getEmergencyHealingTank (reportID) {
-    const url = `${globalConstants.WCL_API_BASE_URL}report/tables/healing/${reportID}?api_key=${globalConstants.API_KEY}&wipes=2&end=${globalConstants.ENDTIME}&boss=-3&difficulty=0&filter=effectiveHealing%20!%3D%200%20AND%20resources.hpPercent%20>%200%20AND%20target.role%20%3D%20"tank"%20AND%20((180%20*%20resources.hpPercent%20%20-%20effectiveHealing%20)%20<%209000)%20AND%20effectiveHealing%20>%201200`
+    const url = `${globalConstants.WCL_API_BASE_URL}report/tables/healing/${reportID}?api_key=${globalConstants.API_KEY}&wipes=2&end=${globalConstants.ENDTIME}&boss=-3&difficulty=0&filter=encounterid!%3D724%20AND%20effectiveHealing%20!%3D%200%20AND%20resources.hpPercent%20>%200%20AND%20target.role%20%3D%20"tank"%20AND%20((190%20*%20resources.hpPercent%20%20-%20effectiveHealing%20)%20<%209000)%20AND%20effectiveHealing%20>%201200`
     return getWCLData(url)
 }
 
 function getEmergencyHealingNonTank (reportID) {
-    const url = `${globalConstants.WCL_API_BASE_URL}report/tables/healing/${reportID}?api_key=${globalConstants.API_KEY}&wipes=2&end=${globalConstants.ENDTIME}&boss=-3&difficulty=0&filter=effectiveHealing%20>%201000%20AND%20resources.hpPercent%20>%200%20AND%20target.role%20!%3D%20"tank"%20AND%20((110%20*%20resources.hpPercent%20%20-%20effectiveHealing%20)%20<%205500)`
+    const url = `${globalConstants.WCL_API_BASE_URL}report/tables/healing/${reportID}?api_key=${globalConstants.API_KEY}&wipes=2&end=${globalConstants.ENDTIME}&boss=-3&difficulty=0&filter=encounterid!%3D724%20AND%20effectiveHealing%20>%201200%20AND%20resources.hpPercent%20>%200%20AND%20target.role%20!%3D%20"tank"%20AND%20((110%20*%20resources.hpPercent%20%20-%20effectiveHealing%20)%20<%205500)`
     return getWCLData(url)
 }
 
@@ -53,7 +53,7 @@ function getFight (reportID) {
 }
 
 function getFightSummary (reportID, start, end) {
-    const url = `${globalConstants.WCL_API_BASE_URL}report/tables/summary/${reportID}?api_key=${globalConstants.API_KEY}&start=${start}&end=${end}`
+    const url = `${globalConstants.WCL_API_BASE_URL}report/tables/summary/${reportID}?api_key=${globalConstants.API_KEY}&start=${start}&end=${end}&filter=encounterid%20%21%3D%20724`
     return getWCLData(url)
 }
 

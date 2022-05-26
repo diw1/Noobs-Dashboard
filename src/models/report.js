@@ -6,7 +6,6 @@ import {globalConstants} from '../globalConstants'
 export default {
     name: 'report',
     initialState: {
-        is3Shaman: false,
         dmg: null,
         healing: null,
         tankIds: null,
@@ -23,10 +22,10 @@ export default {
         shamanEarthShield: null,
         bossFightExtraArmorBuff: null,
         lightGraceBuff: null,
-        missed_l5_arcane: null,
+        missed_bear_down: null,
         dispels: null,
         prayOfMending: null,
-
+        brutallusHealing: null,
 
         filteredBossDmg:null,
         fight:null,
@@ -68,13 +67,11 @@ export default {
             dpsIds = fightsSummary.data?.playerDetails?.dps?.filter(player=>player.specs?.length>0)?.map(player=>player.id)
             tankIds = fightsSummary.data?.playerDetails?.tanks?.map(player=>player.id)
             healerIds = fightsSummary.data?.playerDetails?.healers?.map(player=>player.id)
-            const is3Shaman = fightsSummary.data?.playerDetails?.healers?.filter(player=>player.type==='Shaman')?.length===3
             actions.report.save({
                 fightsSummary: fightsSummary?.data,
                 tankIds,
                 healerIds,
                 dpsIds,
-                is3Shaman
             })
         },
 
@@ -82,13 +79,13 @@ export default {
             const result = await service.getTables(reportId,'healing')
             const {damageDone, playerDetails} = actions.report.getS().report.fightsSummary
             const healIds = actions.report.getS().report.healerIds
-            const healerDamageDone = damageDone.filter(item=>healIds.includes(item.id)).reduce((acc,item)=>acc+item.total,0)
+            const healerDamageDone = damageDone.filter(item=>healIds.includes(item.id)).reduce((acc,item)=>acc+ (item.total ? item.total :0) ,0)
             let totalHealing = result.data?.entries?.reduce((acc,item)=>acc+item.total,0)
             actions.report.save({
                 healing: result.data.entries.filter(player=>player.type!=='NPC').map(player=>({
                     ...player,
                     damage: damageDone?.find(record=>record.id===player.id)?.total,
-                    percent: (player.total+damageDone?.find(record=>record.id===player.id)?.total)/(totalHealing+healerDamageDone),
+                    percent: (player.total+ (damageDone?.find(record=>record.id===player.id)?.total || 0))/(totalHealing+healerDamageDone),
                     specs: playerDetails.healers?.find(record=>record.id===player.id)?.specs,
                 }))
             })
@@ -221,6 +218,23 @@ export default {
             })
         },
 
+        async checkG2Shaman(reportId){
+            const shamans = actions.report.getS().report.healing?.filter(player=>player.type==='Shaman')
+            let sum = shamans?.map(async (shaman) => {
+                const result = await service.getTables(reportId,'buffs', {
+                    abilityid: 20218,
+                })
+                const g2Shaman = result.data?.auras?.find(aura=>aura.id===shaman.id)?.totalUses>8
+
+                return {...shaman, g2Shaman}
+            })
+            Promise.all(sum).then(records=>{
+                const healing = actions.report.getS().report.healing.map(player=>({...player, ...records.find(record=>record.id === player.id)}))
+                actions.report.save({healing})
+            })
+        },
+
+
         async checkHealingToTank(reportId){
             const {tankIds,healerIds, emergencyHealingNonTank} = actions.report.getS().report
 
@@ -245,6 +259,43 @@ export default {
                     tankHealingReceivedPercent: healerRes[player.id]/totalTanksHealing
                 }))
                 actions.report.save({healing})
+            })
+        },
+
+        async checkHealingBrutallus(reportId){
+
+            const result = await service.getTables(reportId,'healing', {
+                encounter: globalConstants.BRUTALLUS_ENCOUNTER_ID
+            })
+
+            actions.report.save({brutallusHealing: result?.data?.entries})
+        },
+
+        async checkHealingToTankBrutallus(reportId){
+            const {tankIds,healerIds, emergencyHealingNonTank} = actions.report.getS().report
+
+            let healerRes = healerIds.reduce((acc,curr)=> (acc[curr]=0 ,acc),{})
+            let totalTanksHealing = 0
+            let sum = tankIds?.map(async (tank) => {
+                const result = await service.getTables(reportId,'healing', {
+                    targetid: tank,
+                    encounter: globalConstants.BRUTALLUS_ENCOUNTER_ID
+                })
+                const totalHealing = result.data?.entries?.reduce((acc,item)=>acc+item.total,0)
+
+                healerIds.map(healer=>{
+                    const healerEntry = result.data?.entries?.find(entry=>healer===entry.id)
+                    if (healerEntry) healerRes[healer] = healerRes[healer] + healerEntry.total
+                })
+                totalTanksHealing += totalHealing
+            })
+            Promise.all(sum).then(records=>{
+                const brutallusHealing = actions.report.getS().report.brutallusHealing.map(player=>({...player,
+                    healingToTankBrutallus: healerRes[player.id],
+                    healingToTankBrutallusPercent: healerRes[player.id]/player.total,
+                    tankHealingReceivedBrutallusPercent: healerRes[player.id]/totalTanksHealing
+                }))
+                actions.report.save({brutallusHealing})
             })
         },
 
@@ -306,12 +357,12 @@ export default {
             })
         },
 
-        async getL5Arcane(reportId){
-            const bossResult = await service.getEvents(reportId,'damage-taken', {abilityid:globalConstants.L5_ARCANE_ID})
+        async getBearDown(reportId){
+            const bossResult = await service.getEvents(reportId,'damage-taken', {abilityid:globalConstants.BEAR_DOWN})
             actions.report.save({
-                missed_l5_arcane: bossResult.data?.events?.reduce((accu,item)=>{
+                missed_bear_down: bossResult.data?.events?.reduce((accu,item)=>{
 
-                    accu += item?.absorbed > 0 || item?.amount===0 ? 0: 1
+                    accu += item?.amount===0 ? 0: 1
                     return accu
                 },0),
             })

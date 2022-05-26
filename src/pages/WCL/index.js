@@ -27,6 +27,7 @@ class DashboardPage extends Component{
         actions.report.getSummary(report).then(()=>{
             promises.push(actions.report.getHealing(report))
             promises.push(actions.report.getFightDebuff(report))
+            promises.push(actions.report.checkHealingBrutallus(report))
             promises.push(actions.report.getemergencyHealingTank(report))
             promises.push(actions.report.getEmergencyHealingNonTank(report))
             Promise.all(promises).then(()=>{
@@ -34,16 +35,18 @@ class DashboardPage extends Component{
                 promises.push(actions.report.getRunes(report))
                 promises.push(actions.report.getManaPotion(report))
                 promises.push(actions.report.getLifeBloomHealing(report))
-                promises.push(actions.report.getPOMHealing(report))
+                // promises.push(actions.report.getPOMHealing(report))
                 promises.push(actions.report.getEarthShield(report))
                 promises.push(actions.report.getBossFightArmorBuff(report))
                 promises.push(actions.report.getLightGraceBuff(report))
                 promises.push(actions.report.getDispels(report))
-                promises.push(actions.report.getL5Arcane(report))
+                promises.push(actions.report.getBearDown(report))
                 promises.push(actions.report.checkG4Shaman(report))
+                promises.push(actions.report.checkG2Shaman(report))
                 promises.push(actions.report.getTankRenewBuff(report))
                 promises.push(actions.report.getPriestShield(report))
                 promises.push(actions.report.checkHealingToTank(report))
+                promises.push(actions.report.checkHealingToTankBrutallus(report))
                 Promise.all(promises).then(()=>{
                     this.setState({loading: false})
                 })
@@ -66,22 +69,21 @@ class DashboardPage extends Component{
         return (sum/totalTime).toFixed(2)
     }
 
-    calculatePOM = (tankIds, pom, time) => {
-        let sum = 0
-        tankIds.map(tankId=>{
-            const tankEntry = pom?.entries.find(entry=>tankId===entry.id)
-            if (tankEntry) sum = sum + tankEntry.total
-        })
-        return [sum, sum/time*1000]
-    }
+    // calculatePOM = (tankIds, pom, time) => {
+    //     let sum = 0
+    //     tankIds.map(tankId=>{
+    //         const tankEntry = pom?.entries.find(entry=>tankId===entry.id)
+    //         if (tankEntry) sum = sum + tankEntry.total
+    //     })
+    //     return [sum, sum/time*1000]
+    // }
 
     calculatePercentScore = (record) => {
         let pass = 0
         let max = 0
-        const {is3Shaman} = this.props
         switch (record.type){
         case 'Paladin':
-            pass = is3Shaman? globalConstants.PALADIN_PERCENT_3SHAMANS : globalConstants.PALADIN_PERCENT
+            pass = globalConstants.PALADIN_PERCENT
             max = globalConstants.PALADIN_HEALING_MAX
             break
         case 'Druid' :
@@ -89,16 +91,12 @@ class DashboardPage extends Component{
             max = globalConstants.DREAMSTATE_DRUID_HEALING_MAX
             break
         case 'Priest':
-            pass = record.icon==='Priest-Holy' ?
-                is3Shaman? globalConstants.HOLY_PRIEST_PERCENT_3SHAMANS : globalConstants.HOLY_PRIEST_PERCENT :
-                is3Shaman? globalConstants.DISCIPLINE_PRIEST_PERCENT_3SHAMANS : globalConstants.DISCIPLINE_PRIEST_PERCENT
+            pass = record.icon==='Priest-Holy' ? globalConstants.HOLY_PRIEST_PERCENT : globalConstants.DISCIPLINE_PRIEST_PERCENT
             max = globalConstants.PRIEST_HEALING_MAX
             break
         case 'Shaman':
-            pass = record.withShadowPriest ?
-                is3Shaman? globalConstants.G4_SHAMAN_PERCENT_3SHAMANS : globalConstants.G4_SHAMAN_PERCENT :
-                is3Shaman? globalConstants.G2_SHAMAN_PERCENT_3SHAMANS : globalConstants.G2_SHAMAN_PERCENT
-            max = globalConstants.SHAMAN_HEALING_MAX
+            pass = record.g2Shaman? globalConstants.G2_SHAMAN_PERCENT: record.withShadowPriest ? globalConstants.G4_SHAMAN_PERCENT : globalConstants.G5_SHAMAN_PERCENT
+            max =  record.g2Shaman? globalConstants.G2_SHAMAN_HEALING_MAX: record.withShadowPriest ? globalConstants.G4_SHAMAN_HEALING_MAX : globalConstants.G5_SHAMAN_HEALING_MAX
         }
         return record.percent > pass ? `大于${toPercent(pass,1)},${max}分` : `小于${toPercent(pass,1)},不合格,${(Math.max(0,max-(pass-record.percent)/0.002)).toFixed(1)}分`
     }
@@ -116,12 +114,14 @@ class DashboardPage extends Component{
     }
 
     generateSource = () => {
-        const {healing, fightsSummary, dispels, emergencyHealingTank, emergencyHealingNonTank, tankIds, healerIds, runes, manaPotion, bossFightDebuff,missed_l5_arcane, bossTrashDebuff, prayOfMending, druidLifeBloom, shamanEarthShield, bossFightExtraArmorBuff, lightGraceBuff} = this.props
+        const {healing, brutallusHealing, dispels, emergencyHealingTank, emergencyHealingNonTank, tankIds, healerIds, runes, manaPotion, bossFightDebuff,missed_bear_down, bossTrashDebuff, druidLifeBloom, shamanEarthShield, bossFightExtraArmorBuff, lightGraceBuff} = this.props
         return healing?.filter(entry=>healerIds?.find(id=>id===entry.id))?.map(entry=>{
             const emergency = emergencyHealingTank?.find(i=>i.id===entry.id)?.total || 0
             const emergencyPercent = emergencyHealingTank?.find(i=>i.id===entry.id)?.percent || 0
             const emergencyNonTank = emergencyHealingNonTank?.find(i=>i.id===entry.id)?.total || 0
             const emergencyNonTankPercent = emergencyHealingNonTank?.find(i=>i.id===entry.id)?.percent || 0
+            const brutallusTankTotal = brutallusHealing?.find(i=>i.id===entry.id)?.healingToTankBrutallus || 0
+            const brutallusTankPercent = brutallusHealing?.find(i=>i.id===entry.id)?.healingToTankBrutallusPercent || 0
             const runesCasts = runes?.find(trashEntry=>trashEntry.id===entry.id)?.runes
             const runesAverage = runes?.find(trashEntry=>trashEntry.id===entry.id)?.runeSum/healerIds.length
             const manaPotionCasts = manaPotion?.find(trashEntry=>trashEntry.id===entry.id)?.manaPotion || 0
@@ -131,7 +131,7 @@ class DashboardPage extends Component{
             const trashFF = parseFloat(bossTrashDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUptime/bossTrashDebuff?.totalTime*100).toFixed(2)
             const trashFFCast = bossTrashDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUses
             const lifeBloom = this.calculateLifeBloom(tankIds,druidLifeBloom)
-            const [pom,pomPersecond] = this.calculatePOM(tankIds,prayOfMending, fightsSummary?.totalTime)
+            // const [pom,pomPersecond] = this.calculatePOM(tankIds,prayOfMending, fightsSummary?.totalTime)
             const earthShield = toPercent(shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffPercent,1)
             const earthShieldCast = shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffCast
             const lightGrace = toPercent(lightGraceBuff?.auras?.find(trashEntry=>trashEntry.id===entry.id)?.totalUptime / lightGraceBuff?.totalTime, 2)
@@ -156,9 +156,9 @@ class DashboardPage extends Component{
                 bossFightExtraArmorBuff,
                 lightGrace,
                 dispelCasts,
-                missed_l5_arcane,
-                pom,
-                pomPersecond
+                missed_bear_down,
+                brutallusTankTotal,
+                brutallusTankPercent
             }
         })
 
@@ -170,7 +170,7 @@ class DashboardPage extends Component{
     }
 
     render() {
-        const {is3Shaman, runes, manaPotion} = this.props
+        const {runes, manaPotion} = this.props
         const runeAverage = runes && this.calculatedRuneAverage(runes)
         const potionAverage = manaPotion && this.calculatedPotionAverage(manaPotion)
         const {loading, cnWCL} = this.state
@@ -240,17 +240,29 @@ class DashboardPage extends Component{
                 dataIndex: 'healingToTank',
                 sorter: (a, b) => a.healingToTank-b.healingToTank,
                 render: (text, record)=> <span><div>{text},</div>
-                    <div>{toPercent(record.healingToTankPercent,1)} {record.type==='Paladin' && (globalConstants[`TANK_HEALING_PERCENT_CAP${is3Shaman?'_3SHAMANS':''}`]-record.healingToTankPercent>0 ?  `${Math.max(0,(5 - (globalConstants[`TANK_HEALING_PERCENT_CAP${is3Shaman?'_3SHAMANS':''}`] - record.healingToTankPercent) /0.02)).toFixed(2)}分`: '5分')},
-                        {toPercent(record.tankHealingReceivedPercent,1)} {(record.type==='Paladin' || record.type==='Priest') && (globalConstants[`TANK_RECEIVED_PERCENT_CAP_${record.type.toUpperCase()}${is3Shaman?'_3SHAMANS':''}`]-record.tankHealingReceivedPercent>0 ?  `${Math.max(0,(5 - (globalConstants[`TANK_RECEIVED_PERCENT_CAP_${record.type.toUpperCase()}${is3Shaman?'_3SHAMANS':''}`] - record.tankHealingReceivedPercent) /0.004)).toFixed(2)}分`: '5分')}</div>
+                    <div>{toPercent(record.healingToTankPercent,1)} {record.type==='Paladin' && (globalConstants['TANK_HEALING_PERCENT_CAP']-record.healingToTankPercent>0 ?  `${Math.max(0,(5 - (globalConstants['TANK_HEALING_PERCENT_CAP'] - record.healingToTankPercent) /0.02)).toFixed(2)}分`: '5分')},
+                        {toPercent(record.tankHealingReceivedPercent,1)} {(record.type==='Paladin' || record.type==='Druid') && (globalConstants[`TANK_RECEIVED_PERCENT_CAP_${record.type.toUpperCase()}`]-record.tankHealingReceivedPercent>0 ?  `${Math.max(0,(5 - (globalConstants[`TANK_RECEIVED_PERCENT_CAP_${record.type.toUpperCase()}`] - record.tankHealingReceivedPercent) /0.004)).toFixed(2)}分`: '5分')}</div>
                 </span>
             },
+            {
+                title: <Tooltip title="括号中值是你对坦克的治疗占你治疗的百分比">
+                    <span>布胖坦克治疗量<QuestionCircleOutlined /></span>
+                </Tooltip>,
+                dataIndex: 'brutallusTankTotal',
+                sorter: (a, b) => a.brutallusTankTotal-b.brutallusTankTotal,
+                render: (text, record)=> <span><div>{text},</div>
+                    <div>{toPercent(record.brutallusTankPercent,1)} {record.type==='Priest' && (globalConstants['BRUTALLUS_PRIEST_CAP']-record.brutallusTankPercent>0 ?  `${Math.max(0,(5 - (globalConstants['BRUTALLUS_PRIEST_CAP'] - record.brutallusTankPercent) /0.03)).toFixed(2)}分`: '5分')}
+                        {record.g2Shaman && (globalConstants['BRUTALLUS_SHAMAN_CAP']-record.brutallusTankPercent>0 ?  `${Math.max(0,(5 - (globalConstants['BRUTALLUS_SHAMAN_CAP'] - record.brutallusTankPercent) /0.04)).toFixed(2)}分`: '5分')}</div>
+                </span>
+            },
+
             {
                 title: <Tooltip title="对坦克血在50%以下时的直接治疗量">
                     <span>坦克急救<QuestionCircleOutlined /></span>
                 </Tooltip>,
                 dataIndex: 'emergency',
                 sorter: (a, b) => a.emergency-b.emergency,
-                render: (text, record)=> `${text}(${(record.emergencyPercent*100).toFixed(1)}%) ${record.type==='Paladin' ? (globalConstants[`TANK_EMERGENCY_CAP${is3Shaman?'_3SHAMANS':''}`]-record.emergencyPercent>0 ?  `${Math.max(0,10 - (globalConstants[`TANK_EMERGENCY_CAP${is3Shaman?'_3SHAMANS':''}`] - record.emergencyPercent) /0.02).toFixed(2)}分`: '10分'):''} `
+                render: (text, record)=> `${text}(${(record.emergencyPercent*100).toFixed(1)}%) ${record.type==='Paladin' ? (globalConstants['TANK_EMERGENCY_CAP']-record.emergencyPercent>0 ?  `${Math.max(0,10 - (globalConstants['TANK_EMERGENCY_CAP'] - record.emergencyPercent) /0.02).toFixed(2)}分`: '10分'):''} `
             },
             {
                 title: <Tooltip title="对非坦克目标血在50%以下时的直接治疗量">
@@ -258,7 +270,7 @@ class DashboardPage extends Component{
                 </Tooltip>,
                 dataIndex: 'emergencyNonTank',
                 sorter: (a, b) => a.emergencyNonTank-b.emergencyNonTank,
-                render: (text, record)=> `${text}(${(record.emergencyNonTankPercent*100).toFixed(1)}%)${record.type==='Druid' ? (globalConstants.RAID_EMERGENCY_CAP_DRUID-record.emergencyNonTankPercent>0 ?  `${Math.max(0,globalConstants.RAID_EMERGENCY_MAX_DRUID - (globalConstants.RAID_EMERGENCY_CAP_DRUID - record.emergencyNonTankPercent) /0.02).toFixed(2)}分`: `${globalConstants.RAID_EMERGENCY_MAX_DRUID}分`):''} `
+                render: (text, record)=> `${text}(${(record.emergencyNonTankPercent*100).toFixed(1)}%)`
             },
             {
                 title: <Tooltip title={`平均数为: ${potionAverage}`}>
@@ -322,6 +334,11 @@ class DashboardPage extends Component{
                 title: '奶骑',
                 children: [
                     {
+                        title: '冲压没保护次数',
+                        dataIndex: 'missed_bear_down',
+                        render: (text, record)=> record.type === 'Paladin' && `${text} (需具体查看，不一定是奶骑问题)`
+                    },
+                    {
                         title: '圣光之赐覆盖',
                         dataIndex: 'lightGrace',
                         render: (text, record)=> record.type === 'Paladin' && `${text}`
@@ -332,34 +349,29 @@ class DashboardPage extends Component{
             {
                 title: '奶牧',
                 children: [
-                    {
-                        title: '5级奥术充能没盾次数',
-                        dataIndex: 'missed_l5_arcane',
-                        render: (text, record)=> record.type === 'Priest' && `${text} ${Number.parseInt(text)>0 ? `扣${text}分`:''}`
-                    },
-                    {
-                        title: <Tooltip title="坦克愈合祷言(包含过量)总和">
-                            <span>坦克愈合(5分)<QuestionCircleOutlined /></span>
-                        </Tooltip>,
-                        dataIndex: 'pom',
-                        render: (text, record)=> record.type === 'Priest' && `${text}(${record.pomPersecond.toFixed(1)})${globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}POM_HPS_CAP${is3Shaman?'_3SHAMANS':''}`]-record.pomPersecond>0 ?
-                            `${Math.max(0,(5-(globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}POM_HPS_CAP${is3Shaman?'_3SHAMANS':''}`]-record.pomPersecond)/globalConstants.POM_COEFFICIENT)).toFixed(2)}分`: '5分'} `
-                    },
+                    // {
+                    //     title: <Tooltip title="坦克愈合祷言(包含过量)总和">
+                    //         <span>坦克愈合(5分)<QuestionCircleOutlined /></span>
+                    //     </Tooltip>,
+                    //     dataIndex: 'pom',
+                    //     render: (text, record)=> record.type === 'Priest' && `${text}(${record.pomPersecond.toFixed(1)})${globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}POM_HPS_CAP`]-record.pomPersecond>0 ?
+                    //         `${Math.max(0,(5-(globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}POM_HPS_CAP`]-record.pomPersecond)/globalConstants.POM_COEFFICIENT)).toFixed(2)}分`: '5分'} `
+                    // },
                     {
                         title: <Tooltip title="BOSS战所有坦克恢复buff覆盖率的总和">
                             <span>坦克恢复(5分)<QuestionCircleOutlined /></span>
                         </Tooltip>,
                         dataIndex: 'renewOnTank',
-                        render: (text, record)=> record.type === 'Priest' && `${(text*100).toFixed(1)}%(${globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}RENEW_CAP${is3Shaman?'_3SHAMANS':''}`]-text>0 ?
-                            `${Math.max(0,(5-(globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}RENEW_CAP${is3Shaman?'_3SHAMANS':''}`]-text)/0.04)).toFixed(2)}分`: '5分'}) `
+                        render: (text, record)=> record.type === 'Priest' && `${(text*100).toFixed(1)}%(${globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}RENEW_CAP`]-text>0 ?
+                            `${Math.max(0,(5-(globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}RENEW_CAP`]-text)/0.04)).toFixed(2)}分`: '5分'}) `
                     },
                     {
                         title: <Tooltip title="每分钟套盾次数">
                             <span>套盾次数(5分)<QuestionCircleOutlined /></span>
                         </Tooltip>,
                         dataIndex: 'shieldCast',
-                        render: (text, record)=> record.type === 'Priest' && `${text}(${record.shieldCastPerMinute?.toFixed(2)})${globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}SHIELD_MINUTE_CAP${is3Shaman?'_3SHAMANS':''}`]-record.shieldCastPerMinute>0 ? 
-                            `${Math.max(0,(5-(globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}SHIELD_MINUTE_CAP${is3Shaman?'_3SHAMANS':''}`]-record.shieldCastPerMinute)/0.15)).toFixed(2)}分`: '5分'} `
+                        render: (text, record)=> record.type === 'Priest' && `${text}(${record.shieldCastPerMinute?.toFixed(2)})${globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}SHIELD_MINUTE_CAP`]-record.shieldCastPerMinute>0 ? 
+                            `${Math.max(0,(5-(globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}SHIELD_MINUTE_CAP`]-record.shieldCastPerMinute)/0.15)).toFixed(2)}分`: '5分'} `
                     },
                 ]
             },

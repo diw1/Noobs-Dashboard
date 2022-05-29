@@ -40,6 +40,7 @@ class DashboardPage extends Component{
                 promises.push(actions.report.getBossFightArmorBuff(report))
                 promises.push(actions.report.getLightGraceBuff(report))
                 promises.push(actions.report.getDispels(report))
+                promises.push(actions.report.getInterrupts(report))
                 promises.push(actions.report.getBearDown(report))
                 promises.push(actions.report.checkG4Shaman(report))
                 promises.push(actions.report.checkG2Shaman(report))

@@ -24,6 +24,7 @@ export default {
         lightGraceBuff: null,
         missed_bear_down: null,
         dispels: null,
+        interrupts: null,
         prayOfMending: null,
         brutallusHealing: null,
 
@@ -77,6 +78,8 @@ export default {
 
         async getHealing(reportId){
             const result = await service.getTables(reportId,'healing')
+            const interrupts = await actions.report.getInterrupts(reportId)
+            console.log(interrupts)
             const {damageDone, playerDetails} = actions.report.getS().report.fightsSummary
             const healIds = actions.report.getS().report.healerIds
             const healerDamageDone = damageDone.filter(item=>healIds.includes(item.id)).reduce((acc,item)=>acc+ (item.total ? item.total :0) ,0)
@@ -85,8 +88,10 @@ export default {
                 healing: result.data.entries.filter(player=>player.type!=='NPC').map(player=>({
                     ...player,
                     damage: damageDone?.find(record=>record.id===player.id)?.total,
-                    percent: (player.total+ (damageDone?.find(record=>record.id===player.id)?.total || 0))/(totalHealing+healerDamageDone),
+                    percent: (player.total+ (damageDone?.find(record=>record.id===player.id)?.total || 0)+ globalConstants.INTERRUPT_REWARDS * (interrupts?.find(record=>record.id===player.id)?.total || 0) )/(totalHealing+healerDamageDone),
                     specs: playerDetails.healers?.find(record=>record.id===player.id)?.specs,
+                    interrupts: interrupts?.find(record=>record.id===player.id)?.total || 0
+
                 }))
             })
         },
@@ -355,6 +360,21 @@ export default {
             actions.report.save({
                 dispels: result
             })
+            return result
+        },
+
+        async getInterrupts(reportId){
+            const bossResult = await service.getTables(reportId,'interrupts')
+            const interruptArray = bossResult.data?.entries[0]?.entries.map(entry=>entry?.details)?.flat()
+            let result = Array.from(interruptArray.reduce((acc, {total, id, ...r})=>{
+                const key = id
+                const current = acc.get(key) || {...r, total: 0, id}
+                return acc.set(key, {...current, total: current.total + total})
+            }, new Map).values())
+            actions.report.save({
+                interrupts: result
+            })
+            return result
         },
 
         async getBearDown(reportId){

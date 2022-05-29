@@ -291,6 +291,10 @@ class DashboardPage extends Component{
                 sorter: (a, b) => a.dispelCasts-b.dispelCasts,
             },
             {
+                title: '打断',
+                dataIndex: 'interrupts',
+            },
+            {
                 title: '奶德',
                 children: [
                     {

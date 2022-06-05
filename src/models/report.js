@@ -27,6 +27,7 @@ export default {
         interrupts: null,
         prayOfMending: null,
         brutallusHealing: null,
+        kalecTime: 1,
 
         filteredBossDmg:null,
         fight:null,
@@ -146,13 +147,14 @@ export default {
         },
 
         async getEarthShield(reportId){
-            const shamans = actions.report.getS().report.fightsSummary?.playerDetails?.healers?.filter(player=>player.type==='Shaman')
+            const {fightsSummary, kalecTime} = actions.report.getS().report
+            const shamans = fightsSummary?.playerDetails?.healers?.filter(player=>player.type==='Shaman')
             let sum = shamans?.map(async (shaman) => {
                 const result = await service.getTables(reportId,'buffs', {
                     abilityid: globalConstants.EARTH_SHIELD_ID,
                     sourceid: shaman.id
                 })
-                const buffPercent = result.data?.auras?.reduce((acc,item)=>acc+item.totalUptime,0) / result.data.totalTime
+                const buffPercent = result.data?.auras?.reduce((acc,item)=>acc+item.totalUptime,0) / (result.data.totalTime - kalecTime)
 
                 const castResult = await service.getTables(reportId,'casts', {
                     abilityid: globalConstants.EARTH_SHIELD_ID,
@@ -167,9 +169,9 @@ export default {
         },
 
         async getPriestShield(reportId){
-            const fightsSummary = actions.report.getS().report.fightsSummary
+            const {fightsSummary, kalecTime} = actions.report.getS().report
             const priests = fightsSummary?.playerDetails?.healers?.filter(player=>player.type==='Priest')
-            const fightTimeMinute = fightsSummary?.totalTime/60000
+            const fightTimeMinute = (fightsSummary?.totalTime - kalecTime )/60000
             let sum = priests?.map(async (priest) => {
 
                 const castResult = await service.getTables(reportId,'casts', {
@@ -305,14 +307,15 @@ export default {
         },
 
         async getBossFightArmorBuff(reportId){
-            const tanks = actions.report.getS().report.fightsSummary?.playerDetails?.tanks
+            const {fightsSummary, kalecTime} = actions.report.getS().report
+            const tanks = fightsSummary?.playerDetails?.tanks
             let sum = tanks?.map(async (tank) => {
                 const result = await service.getTables(reportId,'buffs', {
                     sourceid: tank.id,
                     encounter: -2
                 })
                 const buffPercent = result.data?.auras?.filter(aura=>aura.guid===globalConstants.SHAMAN_ARMOR_ID || aura.guid===globalConstants.PRIEST_ARMOR_ID)?.reduce(
-                    (acc,item)=>acc+item.totalUptime,0) / result.data.totalTime
+                    (acc,item)=>acc+item.totalUptime,0) / (result.data.totalTime - kalecTime)
 
                 return {...tank, armorPercent: buffPercent}
             })
@@ -323,7 +326,8 @@ export default {
 
 
         async getTankRenewBuff(reportId){
-            const tanks = actions.report.getS().report.fightsSummary?.playerDetails?.tanks
+            const {fightsSummary, kalecTime} = actions.report.getS().report
+            const tanks = fightsSummary?.playerDetails?.tanks
             let renewSum = 0
             let sum = tanks?.map(async (tank) => {
                 const result = await service.getTables(reportId,'buffs', {
@@ -331,7 +335,7 @@ export default {
                     encounter: -2
                 })
                 const buffPercent = result.data?.auras?.filter(aura=>aura.guid===globalConstants.RENEW_ID)?.reduce(
-                    (acc,item)=>acc+item.totalUptime,0) / result.data.totalTime
+                    (acc,item)=>acc+item.totalUptime,0) / (result.data.totalTime - kalecTime)
                 renewSum += buffPercent
                 return {...tank, renewPercent: buffPercent}
             })
@@ -390,8 +394,11 @@ export default {
 
         async getFight(reportId){
             const result = await service.getFight(reportId)
+            const kalecFight = result.data?.fights?.find(fight=>fight.boss===724)
+            const kalecTime = kalecFight.end_time - kalecFight.start_time
             actions.report.save({
-                fight: result.data
+                fight: result.data,
+                kalecTime
             })
         },
 

@@ -27,6 +27,7 @@ class DashboardPage extends Component{
         actions.report.getSummary(report).then(()=>{
             promises.push(actions.report.getHealing(report))
             promises.push(actions.report.getFightDebuff(report))
+            promises.push(actions.report.getFight(report))
             promises.push(actions.report.checkHealingBrutallus(report))
             promises.push(actions.report.getemergencyHealingTank(report))
             promises.push(actions.report.getEmergencyHealingNonTank(report))
@@ -61,7 +62,7 @@ class DashboardPage extends Component{
     }
 
     calculateLifeBloom = (tankIds, lifeBloom) => {
-        const totalTime = lifeBloom?.totalTime
+        const totalTime = lifeBloom?.totalTime - this.props.kalecTime
         let sum = 0
         tankIds.map(tankId=>{
             const tankEntry = lifeBloom?.entries.find(entry=>tankId===entry.id)
@@ -115,7 +116,7 @@ class DashboardPage extends Component{
     }
 
     generateSource = () => {
-        const {healing, brutallusHealing, dispels, emergencyHealingTank, emergencyHealingNonTank, tankIds, healerIds, runes, manaPotion, bossFightDebuff,missed_bear_down, bossTrashDebuff, druidLifeBloom, shamanEarthShield, bossFightExtraArmorBuff, lightGraceBuff} = this.props
+        const {healing, kalecTime, brutallusHealing, dispels, emergencyHealingTank, emergencyHealingNonTank, tankIds, healerIds, runes, manaPotion, bossFightDebuff,missed_bear_down, bossTrashDebuff, druidLifeBloom, shamanEarthShield, bossFightExtraArmorBuff, lightGraceBuff} = this.props
         return healing?.filter(entry=>healerIds?.find(id=>id===entry.id))?.map(entry=>{
             const emergency = emergencyHealingTank?.find(i=>i.id===entry.id)?.total || 0
             const emergencyPercent = emergencyHealingTank?.find(i=>i.id===entry.id)?.percent || 0
@@ -127,7 +128,7 @@ class DashboardPage extends Component{
             const runesAverage = runes?.find(trashEntry=>trashEntry.id===entry.id)?.runeSum/healerIds.length
             const manaPotionCasts = manaPotion?.find(trashEntry=>trashEntry.id===entry.id)?.manaPotion || 0
             const manaPotionAverage = manaPotion?.find(trashEntry=>trashEntry.id===entry.id)?.manaPotion/healerIds.length
-            const bossFF = parseFloat(bossFightDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUptime/bossFightDebuff?.totalTime*100).toFixed(2)
+            const bossFF = parseFloat(bossFightDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUptime/(bossFightDebuff?.totalTime - kalecTime)*100).toFixed(2)
             const bossFFCast = bossFightDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUses
             const trashFF = parseFloat(bossTrashDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUptime/bossTrashDebuff?.totalTime*100).toFixed(2)
             const trashFFCast = bossTrashDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUses
@@ -135,7 +136,7 @@ class DashboardPage extends Component{
             // const [pom,pomPersecond] = this.calculatePOM(tankIds,prayOfMending, fightsSummary?.totalTime)
             const earthShield = toPercent(shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffPercent,1)
             const earthShieldCast = shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffCast
-            const lightGrace = toPercent(lightGraceBuff?.auras?.find(trashEntry=>trashEntry.id===entry.id)?.totalUptime / lightGraceBuff?.totalTime, 2)
+            const lightGrace = toPercent(lightGraceBuff?.auras?.find(trashEntry=>trashEntry.id===entry.id)?.totalUptime / (lightGraceBuff?.totalTime - kalecTime), 2)
             const dispelCasts = dispels?.find(trashEntry=>trashEntry.id===entry.id)?.total
             return {
                 ...entry,

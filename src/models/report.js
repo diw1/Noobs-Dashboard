@@ -207,15 +207,15 @@ export default {
 
 
         async checkG4Shaman(reportId){
-            const shamans = actions.report.getS().report.healing?.filter(player=>player.type==='Shaman')
+            const shamans = actions.report.getS().report.healing
             let sum = shamans?.map(async (shaman) => {
                 const result = await service.getTables(reportId,'resources-gains', {
                     abilityid: 100,
                     sourceid: shaman.id
                 })
                 const withShadowPriest = result.data?.resources?.find(resource=>resource.guid===34919)?.gains>50000
-
-                return {...shaman, withShadowPriest}
+                const manaTide = result.data?.resources?.find(resource=>resource.guid===39609)?.gains
+                return {...shaman, withShadowPriest, manaTide}
             })
             Promise.all(sum).then(records=>{
                 const healing = actions.report.getS().report.healing.map(player=>({...player, ...records.find(record=>record.id === player.id)}))
@@ -229,7 +229,7 @@ export default {
                 const result = await service.getTables(reportId,'buffs', {
                     abilityid: 20218,
                 })
-                const g2Shaman = result.data?.auras?.find(aura=>aura.id===shaman.id)?.totalUses>8
+                const g2Shaman = result.data?.auras?.find(aura=>aura.id===shaman.id)?.totalUptime>250000 && result.data?.auras?.find(aura=>aura.id===shaman.id)?.totalUses>4
 
                 return {...shaman, g2Shaman}
             })

@@ -96,8 +96,8 @@ class DashboardPage extends Component{
             max = globalConstants.PRIEST_HEALING_MAX
             break
         case 'Shaman':
-            pass = record.g2Shaman? globalConstants.G2_SHAMAN_PERCENT: record.withShadowPriest ? globalConstants.G4_SHAMAN_PERCENT : globalConstants.G5_SHAMAN_PERCENT
-            max =  record.g2Shaman? globalConstants.G2_SHAMAN_HEALING_MAX: record.withShadowPriest ? globalConstants.G4_SHAMAN_HEALING_MAX : globalConstants.G5_SHAMAN_HEALING_MAX
+            pass = record.withShadowPriest? globalConstants.G4_SHAMAN_PERCENT: record.g2Shaman ? globalConstants.G2_SHAMAN_PERCENT : globalConstants.G5_SHAMAN_PERCENT
+            max =  record.withShadowPriest? globalConstants.G4_SHAMAN_HEALING_MAX: record.g2Shaman ? globalConstants.G2_SHAMAN_HEALING_MAX : globalConstants.G5_SHAMAN_HEALING_MAX
         }
         return record.percent > pass ? `大于${toPercent(pass,1)},${max}分` : `小于${toPercent(pass,1)},不合格,${(Math.max(0,max-(pass-record.percent)/0.002)).toFixed(1)}分`
     }
@@ -176,6 +176,9 @@ class DashboardPage extends Component{
         const potionAverage = manaPotion && this.calculatedPotionAverage(manaPotion)
         const {loading, cnWCL} = this.state
         const dataSource =  this.generateSource()
+        const g2manaTide = dataSource?.find(record=>record.g2Shaman)?.manaTide
+        const g5manaTide = dataSource?.find(record=>record.type==='Shaman' && !record.g2Shaman && !record.withShadowPriest)?.manaTide
+        const manaTideScore = `${Math.min(5, (g2manaTide/g5manaTide - 1) / 0.1).toFixed(2)}分`
         const columns = [
             {
                 title: 'ID',
@@ -309,7 +312,7 @@ class DashboardPage extends Component{
                         children: [{
                             title: 'Boss(10分)',
                             dataIndex: 'bossFF',
-                            render: (text, record)=> record.type === 'Druid' && `${text}%(${record.bossFFCast}次,${Math.max(0,((Number.parseFloat(text)-50)/5)).toFixed(2)}分)`
+                            render: (text, record)=> record.type === 'Druid' && `${text}%(${record.bossFFCast}次,${(Number.parseFloat(text)/10).toFixed(2)}分)`
                         },{
                             title: '全程(覆盖和施法各5)',
                             dataIndex: 'trashFF',
@@ -322,9 +325,14 @@ class DashboardPage extends Component{
                 title: '奶萨',
                 children: [
                     {
+                        title: '法潮回蓝',
+                        dataIndex: 'manaTide',
+                        render: (text, record) => `${text} ${record.type === 'Shaman' && !record.g2Shaman && !record.withShadowPriest ? manaTideScore :'' }`
+                    },
+                    {
                         title: '大地盾覆盖(施法)(5分)',
                         dataIndex: 'earthShield',
-                        render: (text, record)=> record.type === 'Shaman' && `${text}(${record.earthShieldCast}),${(Number.parseFloat(text)>70 ? 5 : Number.parseFloat(text)<40 ? 0 : (Number.parseFloat(text)-40)/6).toFixed(2)}分`
+                        render: (text, record)=> record.type === 'Shaman' && `${text}(${record.earthShieldCast}),${record.g2Shaman || record.withShadowPriest ? (Number.parseFloat(text)>70 ? 5 : Number.parseFloat(text)<40 ? 0 : (Number.parseFloat(text)-40)/6).toFixed(2) : ''}分`
                     },
                     {
                         title: <Tooltip title="包括灵感在内">

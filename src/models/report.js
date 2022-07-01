@@ -80,7 +80,6 @@ export default {
         async getHealing(reportId){
             const result = await service.getTables(reportId,'healing')
             const interrupts = await actions.report.getInterrupts(reportId)
-            console.log(interrupts)
             const {damageDone, playerDetails} = actions.report.getS().report.fightsSummary
             const healIds = actions.report.getS().report.healerIds
             const healerDamageDone = damageDone.filter(item=>healIds.includes(item.id)).reduce((acc,item)=>acc+ (item.total ? item.total :0) ,0)
@@ -231,7 +230,7 @@ export default {
                 const result = await service.getTables(reportId,'buffs', {
                     abilityid: 20218,
                 })
-                const g2Shaman = result.data?.auras?.find(aura=>aura.id===shaman.id)?.totalUptime>250000 && result.data?.auras?.find(aura=>aura.id===shaman.id)?.totalUses>4
+                const g2Shaman = result.data?.auras?.find(aura=>aura.id===shaman.id)?.totalUptime>200000 && result.data?.auras?.find(aura=>aura.id===shaman.id)?.totalUses>3
 
                 return {...shaman, g2Shaman}
             })

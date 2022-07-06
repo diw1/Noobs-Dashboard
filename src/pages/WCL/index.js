@@ -36,7 +36,7 @@ class DashboardPage extends Component{
                 promises.push(actions.report.getRunes(report))
                 promises.push(actions.report.getManaPotion(report))
                 promises.push(actions.report.getLifeBloomHealing(report))
-                // promises.push(actions.report.getPOMHealing(report))
+                promises.push(actions.report.getPOMHealing(report))
                 promises.push(actions.report.getEarthShield(report))
                 promises.push(actions.report.getBossFightArmorBuff(report))
                 promises.push(actions.report.getLightGraceBuff(report))
@@ -48,6 +48,9 @@ class DashboardPage extends Component{
                 promises.push(actions.report.getTankRenewBuff(report))
                 promises.push(actions.report.getPriestShield(report))
                 promises.push(actions.report.checkHealingToTank(report))
+                promises.push(actions.report.checkMTShaman(report))
+                promises.push(actions.report.getL5CHHealing(report))
+                promises.push(actions.report.getL5COHHealing(report))
                 promises.push(actions.report.checkHealingToTankBrutallus(report))
                 Promise.all(promises).then(()=>{
                     this.setState({loading: false})
@@ -71,16 +74,7 @@ class DashboardPage extends Component{
         return (sum/totalTime).toFixed(2)
     }
 
-    // calculatePOM = (tankIds, pom, time) => {
-    //     let sum = 0
-    //     tankIds.map(tankId=>{
-    //         const tankEntry = pom?.entries.find(entry=>tankId===entry.id)
-    //         if (tankEntry) sum = sum + tankEntry.total
-    //     })
-    //     return [sum, sum/time*1000]
-    // }
-
-    calculatePercentScore = (record) => {
+    calculatePercentScore = (record, is5H) => {
         let pass = 0
         let max = 0
         switch (record.type){
@@ -89,7 +83,7 @@ class DashboardPage extends Component{
             max = globalConstants.PALADIN_HEALING_MAX
             break
         case 'Druid' :
-            pass= globalConstants.DREAMSTATE_DRUID_PERCENT
+            pass= is5H?globalConstants.DREAMSTATE_DRUID_PERCENT_5H:globalConstants.DREAMSTATE_DRUID_PERCENT
             max = globalConstants.DREAMSTATE_DRUID_HEALING_MAX
             break
         case 'Priest':
@@ -97,8 +91,13 @@ class DashboardPage extends Component{
             max = globalConstants.PRIEST_HEALING_MAX
             break
         case 'Shaman':
-            pass = record.withShadowPriest? globalConstants.G4_SHAMAN_PERCENT: record.g2Shaman ? globalConstants.G2_SHAMAN_PERCENT : globalConstants.G5_SHAMAN_PERCENT
-            max =  record.withShadowPriest? globalConstants.G4_SHAMAN_HEALING_MAX: record.g2Shaman ? globalConstants.G2_SHAMAN_HEALING_MAX : globalConstants.G5_SHAMAN_HEALING_MAX
+            if (is5H){
+                pass = record.withShadowPriest? record.mtShaman? globalConstants.G2_4_SHAMAN_PERCENT_5H: globalConstants.G2_5_SHAMAN_PERCENT_5H : globalConstants.G5_SHAMAN_PERCENT_5H
+                max = record.withShadowPriest? globalConstants.G4_SHAMAN_HEALING_MAX: globalConstants.G2_SHAMAN_HEALING_MAX
+            }else{
+                pass = record.withShadowPriest? globalConstants.G4_SHAMAN_PERCENT: record.g2Shaman ? globalConstants.G2_SHAMAN_PERCENT : globalConstants.G5_SHAMAN_PERCENT
+                max =  record.withShadowPriest? globalConstants.G4_SHAMAN_HEALING_MAX: record.g2Shaman ? globalConstants.G2_SHAMAN_HEALING_MAX : globalConstants.G5_SHAMAN_HEALING_MAX
+            }
         }
         return record.percent > pass ? `大于${toPercent(pass,1)},${max}分` : `小于${toPercent(pass,1)},不合格,${(Math.max(0,max-(pass-record.percent)/0.002)).toFixed(1)}分`
     }
@@ -133,7 +132,6 @@ class DashboardPage extends Component{
             const trashFF = parseFloat(bossTrashDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUptime/bossTrashDebuff?.totalTime*100).toFixed(2)
             const trashFFCast = bossTrashDebuff?.auras.find(debuff=>debuff.guid===globalConstants.FAERIEFIRE_ID)?.totalUses
             const lifeBloom = this.calculateLifeBloom(tankIds,druidLifeBloom)
-            // const [pom,pomPersecond] = this.calculatePOM(tankIds,prayOfMending, fightsSummary?.totalTime)
             const earthShield = toPercent(shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffPercent,1)
             const earthShieldCast = shamanEarthShield?.find(trashEntry=>trashEntry.id===entry.id)?.buffCast
             const lightGrace = toPercent(lightGraceBuff?.auras?.find(trashEntry=>trashEntry.id===entry.id)?.totalUptime / (lightGraceBuff?.totalTime - kalecTime), 2)
@@ -172,7 +170,7 @@ class DashboardPage extends Component{
     }
 
     render() {
-        const {runes, manaPotion} = this.props
+        const {runes, manaPotion, healerIds} = this.props
         const runeAverage = runes && this.calculatedRuneAverage(runes)
         const potionAverage = manaPotion && this.calculatedPotionAverage(manaPotion)
         const {loading, cnWCL} = this.state
@@ -180,6 +178,7 @@ class DashboardPage extends Component{
         const g2manaTide = dataSource?.find(record=>record.g2Shaman)?.manaTide
         const g5manaTide = dataSource?.find(record=>record.type==='Shaman' && !record.g2Shaman && !record.withShadowPriest)?.manaTide
         const manaTideScore = `${Math.min(5, (g2manaTide/g5manaTide - 1) / 0.1).toFixed(2)}分`
+        const is5H = healerIds?.length===5
         const columns = [
             {
                 title: 'ID',
@@ -236,7 +235,7 @@ class DashboardPage extends Component{
                 dataIndex: 'total',
                 sorter: (a, b) => a.total-b.total,
                 defaultSortOrder: 'descend',
-                render: (text, record)=> <span><div>{text},</div><div>{toPercent(record.percent, 2)},{this.calculatePercentScore(record)}</div></span>
+                render: (text, record)=> <span><div>{text},</div><div>{toPercent(record.percent, 2)},{this.calculatePercentScore(record, is5H)}</div></span>
             },
             {
                 title: <Tooltip title="括号中第一个值是你对坦克的治疗占你治疗的百分比（奶骑会在分母减去对团血的救急治疗），第二个值是你对坦克的治疗占坦克受到治疗的百分比。">
@@ -246,7 +245,7 @@ class DashboardPage extends Component{
                 sorter: (a, b) => a.healingToTank-b.healingToTank,
                 render: (text, record)=> <span><div>{text},</div>
                     <div>{toPercent(record.healingToTankPercent,1)} {record.type==='Paladin' && (globalConstants['TANK_HEALING_PERCENT_CAP']-record.healingToTankPercent>0 ?  `${Math.max(0,(5 - (globalConstants['TANK_HEALING_PERCENT_CAP'] - record.healingToTankPercent) /0.02)).toFixed(2)}分`: '5分')},
-                        {toPercent(record.tankHealingReceivedPercent,1)} {(record.type==='Paladin' || record.type==='Druid') && (globalConstants[`TANK_RECEIVED_PERCENT_CAP_${record.type.toUpperCase()}`]-record.tankHealingReceivedPercent>0 ?  `${Math.max(0,(5 - (globalConstants[`TANK_RECEIVED_PERCENT_CAP_${record.type.toUpperCase()}`] - record.tankHealingReceivedPercent) /0.004)).toFixed(2)}分`: '5分')}</div>
+                        {toPercent(record.tankHealingReceivedPercent,1)} {(record.type==='Paladin' || record.type==='Druid') && (globalConstants[`TANK_RECEIVED_PERCENT_CAP_${record.type.toUpperCase()}${is5H?'_5H':''}`]-record.tankHealingReceivedPercent>0 ?  `${Math.max(0,(5 - (globalConstants[`TANK_RECEIVED_PERCENT_CAP_${record.type.toUpperCase()}`] - record.tankHealingReceivedPercent) /0.004)).toFixed(2)}分`: '5分')}</div>
                 </span>
             },
             {
@@ -256,7 +255,7 @@ class DashboardPage extends Component{
                 dataIndex: 'brutallusTankTotal',
                 sorter: (a, b) => a.brutallusTankTotal-b.brutallusTankTotal,
                 render: (text, record)=> <span><div>{text},</div>
-                    <div>{toPercent(record.brutallusTankPercent,1)} {record.type==='Priest' && (globalConstants['BRUTALLUS_PRIEST_CAP']-record.brutallusTankPercent>0 ?  `${Math.max(0,(5 - (globalConstants['BRUTALLUS_PRIEST_CAP'] - record.brutallusTankPercent) /0.03)).toFixed(2)}分`: '5分')}
+                    <div>{toPercent(record.brutallusTankPercent,1)} {record?.specs && record?.specs[0]==='Discipline' && (globalConstants['BRUTALLUS_PRIEST_CAP']-record.brutallusTankPercent>0 ?  `${Math.max(0,(5 - (globalConstants['BRUTALLUS_PRIEST_CAP'] - record.brutallusTankPercent) /0.03)).toFixed(2)}分`: '5分')}
                         {record.g2Shaman && (globalConstants['BRUTALLUS_SHAMAN_CAP']-record.brutallusTankPercent>0 ?  `${Math.max(0,(5 - (globalConstants['BRUTALLUS_SHAMAN_CAP'] - record.brutallusTankPercent) /0.04)).toFixed(2)}分`: '5分')}</div>
                 </span>
             },
@@ -328,7 +327,7 @@ class DashboardPage extends Component{
                     {
                         title: '法潮回蓝',
                         dataIndex: 'manaTide',
-                        render: (text, record) => `${text} ${record.type === 'Shaman' && !record.g2Shaman && !record.withShadowPriest ? manaTideScore :'' }`
+                        render: (text, record) => `${text} ${record.type === 'Shaman' && !record.g2Shaman && !record.withShadowPriest &&!is5H ? manaTideScore :'' }`
                     },
                     {
                         title: '大地盾覆盖(施法)(5分)',
@@ -341,6 +340,11 @@ class DashboardPage extends Component{
                         </Tooltip>,
                         width: 150,
                         render: (text, record)=> record.type === 'Shaman' && record.bossFightExtraArmorBuff?.map(item=><div key={item.id}>{item.name}: {(item.armorPercent*100).toFixed(1)}%</div>)
+                    },
+                    {
+                        title: '满级链量(占比)',
+                        dataIndex: 'l5CH',
+                        render: (text, record) => record.type === 'Shaman' && `${text}(${toPercent(record.l5CHPercent,1)})`
                     },
                 ]
             },
@@ -363,14 +367,14 @@ class DashboardPage extends Component{
             {
                 title: '奶牧',
                 children: [
-                    // {
-                    //     title: <Tooltip title="坦克愈合祷言(包含过量)总和">
-                    //         <span>坦克愈合(5分)<QuestionCircleOutlined /></span>
-                    //     </Tooltip>,
-                    //     dataIndex: 'pom',
-                    //     render: (text, record)=> record.type === 'Priest' && `${text}(${record.pomPersecond.toFixed(1)})${globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}POM_HPS_CAP`]-record.pomPersecond>0 ?
-                    //         `${Math.max(0,(5-(globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}POM_HPS_CAP`]-record.pomPersecond)/globalConstants.POM_COEFFICIENT)).toFixed(2)}分`: '5分'} `
-                    // },
+                    {
+                        title: <Tooltip title="愈合祷言HPS">
+                            <span>愈合祷言<QuestionCircleOutlined /></span>
+                        </Tooltip>,
+                        dataIndex: 'pom',
+                        render: (text, record)=> record.type === 'Priest' && `${text}(${record.pomPersecond?.toFixed(1)})${record?.specs[0]==='Holy' ? (globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}POM_HPS_CAP`]-record.pomPersecond>0 ?
+                            `${Math.max(0,(5-(globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}POM_HPS_CAP`]-record?.pomPersecond)/globalConstants.POM_COEFFICIENT)).toFixed(2)}分`: '5分'):''} `
+                    },
                     {
                         title: <Tooltip title="BOSS战所有坦克恢复buff覆盖率的总和">
                             <span>坦克恢复(5分)<QuestionCircleOutlined /></span>
@@ -386,6 +390,11 @@ class DashboardPage extends Component{
                         dataIndex: 'shieldCast',
                         render: (text, record)=> record.type === 'Priest' && `${text}(${record.shieldCastPerMinute?.toFixed(2)})${globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}SHIELD_MINUTE_CAP`]-record.shieldCastPerMinute>0 ? 
                             `${Math.max(0,(5-(globalConstants[`${record?.specs[0]==='Discipline'?'DISP_':'HOLY_'}SHIELD_MINUTE_CAP`]-record.shieldCastPerMinute)/0.15)).toFixed(2)}分`: '5分'} `
+                    },
+                    {
+                        title: '满级环量(占比)',
+                        dataIndex: 'l5COH',
+                        render: (text, record) => record.type === 'Priest' && `${text}(${toPercent(record.l5COHPercent,1)})`
                     },
                 ]
             },

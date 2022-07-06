@@ -122,7 +122,6 @@ export default {
             })
         },
 
-
         async getLifeBloomHealing(reportId){
             const result = await service.getTables(reportId,'healing', {
                 options:8,
@@ -131,17 +130,6 @@ export default {
             })
             actions.report.save({
                 druidLifeBloom: result.data
-            })
-        },
-
-        async getPOMHealing(reportId){
-            const result = await service.getTables(reportId,'healing', {
-                options:8,
-                abilityid: globalConstants.POM_ID,
-                sourceid: actions.report.getS().report.fightsSummary?.playerDetails?.healers?.find(player=>player.type==='Priest')?.id
-            })
-            actions.report.save({
-                prayOfMending: result.data
             })
         },
 
@@ -187,6 +175,66 @@ export default {
             })
         },
 
+        async getPOMHealing(reportId){
+            const {fightsSummary, kalecTime} = actions.report.getS().report
+            const priests = fightsSummary?.playerDetails?.healers?.filter(player=>player.type==='Priest')
+            const fightTime = fightsSummary?.totalTime - kalecTime
+
+            let sum = priests?.map(async (priest) => {
+
+                const healingResult = await service.getTables(reportId,'healing', {
+                    abilityid: globalConstants.POM_ID,
+                    sourceid: priest.id
+                })
+                const pom = healingResult.data?.entries?.reduce((acc,item)=>acc+item.total,0)
+                const pomPersecond = pom/fightTime*1000
+                return {...priest, pom, pomPersecond}
+            })
+            Promise.all(sum).then(records=>{
+                const healing = actions.report.getS().report.healing.map(player=>({...player, ...records.find(record=>record.id === player.id)}))
+                actions.report.save({healing})
+            })
+        },
+
+        async getL5COHHealing(reportId){
+            const {fightsSummary,healing} = actions.report.getS().report
+            const priests = fightsSummary?.playerDetails?.healers?.filter(player=>player.type==='Priest')
+
+            let sum = priests?.map(async (priest) => {
+                const healingResult = await service.getTables(reportId,'healing', {
+                    abilityid: globalConstants.L5COH_ID,
+                    sourceid: priest.id
+                })
+                const l5COH = healingResult.data?.entries?.reduce((acc,item)=>acc+item.total,0)
+                const l5COHPercent = l5COH / healing?.find(player=>priest.id===player.id)?.total
+                return {...priest, l5COH,l5COHPercent}
+            })
+            Promise.all(sum).then(records=>{
+                console.log(records)
+                const healing = actions.report.getS().report.healing.map(player=>({...player, ...records.find(record=>record.id === player.id)}))
+                actions.report.save({healing})
+            })
+        },
+
+        async getL5CHHealing(reportId){
+            const {fightsSummary, healing} = actions.report.getS().report
+            const shamans = fightsSummary?.playerDetails?.healers?.filter(player=>player.type==='Shaman')
+
+            let sum = shamans?.map(async (shaman) => {
+                const healingResult = await service.getTables(reportId,'healing', {
+                    abilityid: globalConstants.L5CH_ID,
+                    sourceid: shaman.id
+                })
+                const l5CH = healingResult.data?.entries?.reduce((acc,item)=>acc+item.total,0)
+                const l5CHPercent = l5CH / healing?.find(player=>shaman.id===player.id)?.total
+                return {...shaman, l5CH, l5CHPercent}
+            })
+            Promise.all(sum).then(records=>{
+                const healing = actions.report.getS().report.healing.map(player=>({...player, ...records.find(record=>record.id === player.id)}))
+                actions.report.save({healing})
+            })
+        },
+
         // async getShamanTotem(reportId){
         //     const healing = actions.report.getS().report.healing
         //     const shamans = healing?.filter(player=>player.type==='Shaman')
@@ -217,6 +265,23 @@ export default {
                 const withShadowPriest = result.data?.resources?.find(resource=>resource.guid===34919)?.gains>50000
                 const manaTide = result.data?.resources?.find(resource=>resource.guid===39609)?.gains
                 return {...shaman, withShadowPriest, manaTide}
+            })
+            Promise.all(sum).then(records=>{
+                const healing = actions.report.getS().report.healing.map(player=>({...player, ...records.find(record=>record.id === player.id)}))
+                actions.report.save({healing})
+            })
+        },
+
+        async checkMTShaman(reportId){
+            const shamans = actions.report.getS().report.healing
+            let sum = shamans?.map(async (shaman) => {
+                const result = await service.getTables(reportId,'healing', {
+                    sourceid: shaman.id,
+                    by: 'target'
+                })
+                const max = result.data?.entries?.reduce((prev, current) => (prev.total > current.total) ? prev : current)
+                const mtShaman = max.type==='Druid'
+                return {...shaman, mtShaman}
             })
             Promise.all(sum).then(records=>{
                 const healing = actions.report.getS().report.healing.map(player=>({...player, ...records.find(record=>record.id === player.id)}))

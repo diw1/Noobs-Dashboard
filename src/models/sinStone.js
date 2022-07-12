@@ -14,7 +14,6 @@ export default {
             try {
                 const payload = {WCL: wclCode}
                 const data = await sinStoneService.postSinStone(payload)
-                console.log(data.data)
                 actions.sinStone.save({
                     sinStone: data.data
                 })

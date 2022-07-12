@@ -210,7 +210,6 @@ export default {
                 return {...priest, l5COH,l5COHPercent}
             })
             Promise.all(sum).then(records=>{
-                console.log(records)
                 const healing = actions.report.getS().report.healing.map(player=>({...player, ...records.find(record=>record.id === player.id)}))
                 actions.report.save({healing})
             })

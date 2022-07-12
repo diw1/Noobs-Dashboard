@@ -84,7 +84,7 @@ class DashboardPage extends Component{
             break
         case 'Druid' :
             pass= is5H?globalConstants.DREAMSTATE_DRUID_PERCENT_5H:globalConstants.DREAMSTATE_DRUID_PERCENT
-            max = globalConstants.DREAMSTATE_DRUID_HEALING_MAX
+            max = is5H?globalConstants.DREAMSTATE_DRUID_HEALING_MAX_5H:globalConstants.DREAMSTATE_DRUID_HEALING_MAX
             break
         case 'Priest':
             pass = record.icon==='Priest-Holy' ? globalConstants.HOLY_PRIEST_PERCENT : globalConstants.DISCIPLINE_PRIEST_PERCENT
@@ -93,7 +93,7 @@ class DashboardPage extends Component{
         case 'Shaman':
             if (is5H){
                 pass = record.withShadowPriest? record.mtShaman? globalConstants.G2_4_SHAMAN_PERCENT_5H: globalConstants.G2_5_SHAMAN_PERCENT_5H : globalConstants.G5_SHAMAN_PERCENT_5H
-                max = record.withShadowPriest? globalConstants.G4_SHAMAN_HEALING_MAX: globalConstants.G2_SHAMAN_HEALING_MAX
+                max = record.withShadowPriest? globalConstants.G2_SHAMAN_HEALING_MAX_5H: globalConstants.G2_SHAMAN_HEALING_MAX
             }else{
                 pass = record.withShadowPriest? globalConstants.G4_SHAMAN_PERCENT: record.g2Shaman ? globalConstants.G2_SHAMAN_PERCENT : globalConstants.G5_SHAMAN_PERCENT
                 max =  record.withShadowPriest? globalConstants.G4_SHAMAN_HEALING_MAX: record.g2Shaman ? globalConstants.G2_SHAMAN_HEALING_MAX : globalConstants.G5_SHAMAN_HEALING_MAX
@@ -245,7 +245,7 @@ class DashboardPage extends Component{
                 sorter: (a, b) => a.healingToTank-b.healingToTank,
                 render: (text, record)=> <span><div>{text},</div>
                     <div>{toPercent(record.healingToTankPercent,1)} {record.type==='Paladin' && (globalConstants['TANK_HEALING_PERCENT_CAP']-record.healingToTankPercent>0 ?  `${Math.max(0,(5 - (globalConstants['TANK_HEALING_PERCENT_CAP'] - record.healingToTankPercent) /0.02)).toFixed(2)}分`: '5分')},
-                        {toPercent(record.tankHealingReceivedPercent,1)} {(record.type==='Paladin' || record.type==='Druid') && (globalConstants[`TANK_RECEIVED_PERCENT_CAP_${record.type.toUpperCase()}${is5H?'_5H':''}`]-record.tankHealingReceivedPercent>0 ?  `${Math.max(0,(5 - (globalConstants[`TANK_RECEIVED_PERCENT_CAP_${record.type.toUpperCase()}`] - record.tankHealingReceivedPercent) /0.004)).toFixed(2)}分`: '5分')}</div>
+                        {toPercent(record.tankHealingReceivedPercent,1)} {(record.type==='Paladin' || record.type==='Druid') && (globalConstants[`TANK_RECEIVED_PERCENT_CAP_${record.type.toUpperCase()}${is5H?'_5H':''}`]-record.tankHealingReceivedPercent>0 ?  `${Math.max(0,((is5H&&record.type==='Druid'?7.5:5) - (globalConstants[`TANK_RECEIVED_PERCENT_CAP_${record.type.toUpperCase()}${is5H?'_5H':''}`] - record.tankHealingReceivedPercent) /0.004)).toFixed(2)}分`: `${is5H&&record.type==='Druid'?7.5:5}分`)}</div>
                 </span>
             },
             {
@@ -332,7 +332,7 @@ class DashboardPage extends Component{
                     {
                         title: '大地盾覆盖(施法)(5分)',
                         dataIndex: 'earthShield',
-                        render: (text, record)=> record.type === 'Shaman' && `${text}(${record.earthShieldCast}),${record.g2Shaman || record.withShadowPriest ? (Number.parseFloat(text)>70 ? 5 : Number.parseFloat(text)<40 ? 0 : (Number.parseFloat(text)-40)/6).toFixed(2) : ''}分`
+                        render: (text, record)=> record.type === 'Shaman' && `${text}(${record.earthShieldCast}),${ (is5H && !(record.withShadowPriest && !record.mtShaman) ||!is5H && (record.withShadowPriest || record.g2Shaman)) ? (Number.parseFloat(text)>70 ? 5 : Number.parseFloat(text)<40 ? 0 : (Number.parseFloat(text)-40)/6).toFixed(2) : ''}分`
                     },
                     {
                         title: <Tooltip title="包括灵感在内">
